@@ -110,6 +110,19 @@ class DvsOracleTool(object):
                 print self.output
                 self.quit(SQLERR)
 
+    def get_version_count(self, *versions):
+        sql = GETVERSIONCOUNT_SQL % "', '".join(versions)
+        if not self.sqlplus(SQLPLUS_EXEC % sql):
+            self.message('Failed to get version count: %s' % ','.join(versions))
+            print self.output
+            self.quit(SQLERR)
+        match = re.match(r'VERSION_COUNT\s+\-+\s+(\d+)\s*', self.output)
+        if not match:
+            self.message('Failed to parse version count')
+            print self.output
+            self.quit(SQLERR)
+        return int(match.group(1))
+
     def read_file(self, name):
         file = open(name, 'r')
         data = file.read()
@@ -318,7 +331,6 @@ class CreateDb(DvsOracleTool):
                                                 EXECSCRIPT_SQL % ddl)
         self.execute_ddl('recompiling schema', RECOMPILE_SQL)
 
-
 class DiffDb(DvsOracleTool):
     def __main__(self):
         parser = optparse.OptionParser(usage='%prog [options] SOURCE TARGET')
@@ -383,6 +395,7 @@ class MigrateDb(DvsOracleTool):
             print self.output
             self.quit(SQLERR)
         self.source_version = match.group(1)
+        self.start_version  = self.source_version
 
         if self.source_version == self.target_version:
             self.message('no migration needed')
@@ -455,7 +468,6 @@ class MigrateDb(DvsOracleTool):
 
         return return_val
 
-
     def do_migrations(self, dir):
 
         self.migrations = {}
@@ -471,8 +483,8 @@ class MigrateDb(DvsOracleTool):
                 continue
             source, target, description = match.groups()
 
-            entry = self.migrations.setdefault(target, [])
-            entry.append( (source, description, data) )
+            entry = self.migrations.setdefault(source, {})
+            entry[target] = (description, [data])
 
         ### get the list of direct migrations
         no_migrations = ConfigParser.ConfigParser()
@@ -480,39 +492,128 @@ class MigrateDb(DvsOracleTool):
 
         for source in no_migrations.options('migrations'):
             target = no_migrations.get('migrations', source)
-            entry = self.migrations.setdefault(target, [])
-            entry.append( (source, '** no migration needed **', None) )
+            entry = self.migrations.setdefault(source, {})
+            entry[target] = ('** no migration needed **', [])
 
-        ### find the migration path
+        ### detect bridge and find the migration path
 
-        self.migration_path = self.find_path(self.target_version)
+        self.bridge         = self.get_bridge_migration(dir)
+        self.migration_path = self.find_path(self.start_version)
         if not self.migration_path:
-            self.message('unable to find a migration path (assuming none needed)')
-            return
+            self.message('unable to find a migration path')
+            for i in range(len(self.broken_paths)):
+                self.message('broken path #%d' % (i+1))
+                for version in self.broken_paths[i]:
+                    self.message(version, '      ')
+            self.quit(MIGERR)
+
+        ### if bridge present, modify the migrations
+        if self.bridge:
+            for guid, commands in self.bridge.items('actions'):
+                if not guid in self.migration_path[1:]:
+                    self.message('cannot find version [%s] in migration path' % guid)
+                    self.quit(MIGERR)
+                for command in commands.split('|'):
+                    args = command.split()
+                    meth = self.__class__.__dict__['bridge_'+args[0].replace('-', '_')]
+                    if not meth:
+                        self.message('unknown action [%s] in bridge action' % args[0])
+                        self.quit(MIGERR)
+                    src  = self.migration_path[self.migration_path.index(guid)-1]
+                    meth(self, dir, src, guid, *args[1:])
 
         ### run the migrations
-
-        for new_version, description, data in self.migration_path:
-            if data:
-                self.execute_sql('running migration: [%s]' % description, data,
-                                 UPDATESCHEMA_SQL % (new_version, description))
+        for i in range(len(self.migration_path)-1):
+            src, tgt  = self.migration_path[i], self.migration_path[i+1]
+            desc, sql = self.migrations[src][tgt]
+            if sql:
+                sql.append(UPDATESCHEMA_SQL % (tgt, desc))
+                self.execute_sql('running migration: [%s]' % desc, *sql)
                 time.sleep(2)
 
-    def find_path(self, node):
-        targets = self.migrations.get(node)
-        if not targets:
-            return None
+        if self.bridge:
+            guid, desc = self.bridge.get('bridge', 'guid'), self.bridge.get('bridge', 'desc')
+            self.execute_sql('bridge successful: [%s]' % desc, UPDATESCHEMA_SQL % (guid, desc))
 
-        path = []
-        for version, description, data in targets:
-            if version == self.source_version:
-                return [ (node, description, data) ]
-            path = self.find_path(version)
-            if path:
-                path.append( (node, description, data) )
-                break
+    def find_path(self, source):
+        queue = [ (source, [source]) ]
+        seen  = []
+        leaf  = []
 
-        return path
+        while queue:
+            version, path = queue.pop(0)
+            if version == self.target_version:
+                return path
+
+            if not version in self.migrations:
+                leaf.append(path)
+                continue
+
+            if version in seen:
+                self.message('Circular reference for %s' % version)
+                continue
+
+            seen.append(version)
+            for migration in self.migrations[version]:
+                new_path = list(path)
+                new_path.append(migration)
+                queue.insert(0, (migration, new_path))
+
+        self.broken_paths = leaf
+        return None
+
+    ### BRIDGE HELPERS
+
+    def get_bridge_migration(self, dir):
+        for name in glob.glob(dir + '/*.ini'):
+            if name.endswith('migration.ini'):
+                continue
+            bridge = ConfigParser.ConfigParser()
+            bridge.read(name)
+            if not 'bridge' in bridge.sections():
+                continue
+            if not self.source_version in bridge.get('bridge', 'source').split():
+                continue
+            if self.get_version_count(bridge.get('bridge', 'guid')) != 0:
+                continue
+
+            self.message('detected bridge: [%s]' % bridge.get('bridge', 'desc'))
+            self.start_version = bridge.get('bridge', 'rebase')
+            self.message('%s => %s' % (self.start_version, self.target_version))
+            return bridge
+
+        return None
+
+    def bridge_skip_if_present(self, dir, src, tgt, *versions):
+        count = self.get_version_count(*versions)
+        if count == len(versions) and count > 0:
+            desc, migr = self.migrations[src][tgt]
+            self.migrations[src][tgt] = (desc, [])
+
+    def bridge_replace_script(self, dir, src, tgt, *scripts):
+        desc, migr = self.migrations[src][tgt]
+        self.migrations[src][tgt] = (desc, self.get_scripts(dir, scripts))
+
+    def bridge_run_pre_script(self, dir, src, tgt, *scripts):
+        desc, migr = self.migrations[src][tgt]
+        sql = self.get_scripts(dir, scripts)
+        sql.extend(migr)
+        self.migrations[src][tgt] = (desc, sql)
+
+    def bridge_run_post_script(self, dir, src, tgt, *scripts):
+        desc, migr = self.migrations[src][tgt]
+        migr.extend(self.get_scripts(dir, scripts))
+        self.migrations[src][tgt] = (desc, migr)
+
+    def bridge_describe(self, dir, src, tgt, *new_desc):
+        desc, migr = self.migrations[src][tgt]
+        self.migrations[src][tgt] = (' '.join(new_desc), migr)
+
+    def get_scripts(dir, scripts):
+        result = []
+        for file in scripts:
+            if os.path.isfile(os.path.join(dir, file)):
+                result.append(open(os.path.join(dir, file), 'r').read())
 
 class SyncDb(DvsOracleTool):
     def __main__(self):
@@ -823,6 +924,12 @@ GETVERSION_SQL = """
 SELECT schema_version
 FROM   schema_log
 WHERE  schema_timestamp = ( SELECT MAX(schema_timestamp) FROM schema_log );
+"""
+
+GETVERSIONCOUNT_SQL = """
+SELECT COUNT(*) AS version_count
+FROM   schema_log
+WHERE  schema_version IN ('%s');
 """
 
 CODEFILTER_INI = """
