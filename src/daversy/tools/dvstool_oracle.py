@@ -710,8 +710,9 @@ class SyncDb(DvsOracleTool):
         self.message('updating the change log')
         migration_changes = []
         if hasattr(self, 'migrate') and self.migrate and self.migrate.migration_path:
-            for version, description, data in self.migrate.migration_path:
-                migration_changes.append('- ' + description)
+            for i in range(len(self.migrate.migration_path)-1):
+                s, t = self.migrate.migration_path[i], self.migrate.migration_path[i+1]
+                migration_changes.append('- ' + self.migrate.migrations[s][t][0])
 
         current_date = datetime.datetime.now().strftime('[%Y-%m-%d %H:%M] ')
 
