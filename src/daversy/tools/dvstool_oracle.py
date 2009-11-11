@@ -697,7 +697,7 @@ class SyncDb(DvsOracleTool):
                 continue
             source, target, description = match.groups()
             if target == 'next-version':
-                self.write_file(migration, data.replace('next-version', self.target_version))
+                self.write_file(migration, data.replace('next-version', self.next_version))
 
         self.message('updating the change log')
         migration_changes = []
