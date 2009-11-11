@@ -111,9 +111,11 @@ class FileState:
             for prop in builder.PropertyList.values():
                 if prop.exclude:
                     continue
-                if not prop.cdata:
+                object[prop.name] = prop.default
+                if prop.name in node.attrib:
                     object[prop.name] = node.get(prop.name) or prop.default
-                else:
+                    continue
+                if prop.cdata:
                     if not hasattr(object, 'SubElements'):
                         object[prop.name] = node.text or prop.default
                     else:
