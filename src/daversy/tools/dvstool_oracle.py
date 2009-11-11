@@ -678,11 +678,8 @@ class SyncDb(DvsOracleTool):
             self.generate_diff(self.current_state, self.latest_state)
 
             # mark that this requires no migration
-            skip_migrations = ConfigParser.ConfigParser()
-            skip_migrations.read(self.migration_conf)
-            skip_migrations.set('migrations', self.current_version, self.next_version)
-            migration_file = file(self.migration_conf, 'w')
-            skip_migrations.write(migration_file)
+            migration_file = open(self.migration_conf, 'a')
+            migration_file.write('%s = %s\n' % (self.current_version, self.next_version))
             migration_file.close()
         elif status == 2:
             self.message('changes detected, performing migration check')
