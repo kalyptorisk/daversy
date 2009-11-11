@@ -18,7 +18,7 @@ class ViewBuilder(object):
 
     PropertyList = odict(
         ('VIEW_NAME', Property('name')),
-        ('TEXT',      Property('definition')),
+        ('TEXT',      Property('definition', cdata=True)),
         ('COMMENTS',  Property('comment'))
     )
 

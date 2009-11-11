@@ -20,7 +20,7 @@ class StoredProcedureBuilder(object):
     PropertyList = odict(
         ('OBJECT_NAME', Property('name')),
         ('INVALID',     Property('invalid')),
-        ('SOURCE',      Property('source', None, lambda x: x.read()))
+        ('SOURCE',      Property('source', None, lambda x: x.read(), cdata=True))
     )
 
     @staticmethod
@@ -51,7 +51,7 @@ class FunctionBuilder(object):
     PropertyList = odict(
         ('OBJECT_NAME', Property('name')),
         ('INVALID',     Property('invalid')),
-        ('SOURCE',      Property('source', None, lambda x: x.read()))
+        ('SOURCE',      Property('source', None, lambda x: x.read(), cdata=True))
     )
 
     @staticmethod
@@ -95,7 +95,7 @@ class OraclePackageBuilder(object):
     PropertyList = odict(
         ('OBJECT_NAME', Property('name')),
         ('INVALID',     Property('invalid')),
-        ('SOURCE',      Property('source', None, lambda x: x.read()))
+        ('SOURCE',      Property('source', None, lambda x: x.read(), cdata=True))
     )
 
     @staticmethod
@@ -123,7 +123,7 @@ class OracleObjectTypeBuilder(object):
     """
     PropertyList = odict(
         ('TYPE_NAME', Property('name')),
-        ('SOURCE',    Property('source', None, lambda x: x.read()))
+        ('SOURCE',    Property('source', None, lambda x: x.read(), cdata=True))
     )
 
     @staticmethod
@@ -159,7 +159,7 @@ class OracleMaterializedViewBuilder(object):
         ('REFRESH_MODE',   Property('refresh-mode')),
         ('REFRESH_METHOD', Property('refresh-method')),
         ('BUILD_MODE',     Property('build-mode')),
-        ('SOURCE',         Property('source'))
+        ('SOURCE',         Property('source', cdata=True))
     )
 
     @staticmethod

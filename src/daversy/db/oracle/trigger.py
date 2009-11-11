@@ -19,7 +19,7 @@ class TriggerBuilder(object):
         ('TRIGGER_NAME', Property('name')),
         ('TYPE',         Property('object-type')),
         ('TABLE_NAME',   Property('object-name')),
-        ('DEFINITION',   Property('definition', None, lambda x: x.read()))
+        ('DEFINITION',   Property('definition', None, lambda x: x.read(), cdata=True))
     )
 
     @staticmethod

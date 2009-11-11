@@ -21,7 +21,7 @@ class CheckConstraintBuilder(object):
 
     PropertyList = odict(
         ('CONSTRAINT_NAME', Property('name')),
-        ('CONDITION',       Property('condition')),
+        ('CONDITION',       Property('condition', cdata=True)),
         ('TABLE_NAME',      Property('table-name', exclude=True))
     )
 

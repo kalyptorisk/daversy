@@ -110,16 +110,21 @@ schema = StringIO("""
     <xsd:attribute name="name" type="NameType" />
   </xsd:complexType>
   <xsd:complexType name="CheckConstraintType">
-    <xsd:sequence>
-      <xsd:element name="constraint-column" type="ConstraintColumnType" minOccurs="0" maxOccurs="unbounded" />
-    </xsd:sequence>
-    <xsd:attribute name="name" type="NameType" />
-    <xsd:attribute name="condition" type="ContentType" />
+    <xsd:simpleContent>
+      <xsd:extension base="ContentType">
+        <xsd:attribute name="name" type="NameType" />
+        <xsd:attribute name="condition" type="ContentType" />
+      </xsd:extension>
+    </xsd:simpleContent>
   </xsd:complexType>
   <xsd:complexType name="SourceType">
-    <xsd:attribute name="name" type="NameType" use="required" />
-    <xsd:attribute name="source" type="ContentType" use="required"/>
-    <xsd:attribute name="invalid" type="xsd:boolean" />
+    <xsd:simpleContent>
+      <xsd:extension base="ContentType">
+        <xsd:attribute name="name" type="NameType" use="required" />
+        <xsd:attribute name="source" type="ContentType" />
+        <xsd:attribute name="invalid" type="xsd:boolean" />
+      </xsd:extension>
+    </xsd:simpleContent>
   </xsd:complexType>
   <xsd:complexType name="ForeignKeyColumnType">
     <xsd:attribute name="name" type="NameType" use="required" />
@@ -167,7 +172,7 @@ schema = StringIO("""
     <xsd:attribute name="table-name" type="NameType" use="required" />
     <xsd:attribute name="unique" type="xsd:boolean" use="required" />
     <!-- TODO: what do the various index-types mean?
-            <xsd:attribute name="index-type" type="xsd:string" default="normal" /> -->
+    <xsd:attribute name="index-type" type="xsd:string" default="normal" /> -->
   </xsd:complexType>
   <xsd:complexType name="ForeignKeyType">
       <xsd:sequence>
@@ -179,16 +184,21 @@ schema = StringIO("""
       <xsd:attribute name="delete-rule" type="ReferentialDeleteEnum" use="required"/>
   </xsd:complexType>
   <xsd:complexType name="MaterializedViewType">
-      <xsd:attribute name="name" type="NameType" use="required" />
-      <xsd:attribute name="invalid" type="xsd:boolean" />
-      <!-- need to add enums here -->
-      <xsd:attribute name="refresh-mode" type="xsd:string" />
-      <xsd:attribute name="refresh-method" type="xsd:string" />
-      <xsd:attribute name="build-mode" type="xsd:string" />
-      <xsd:attribute name="source" type="ContentType" use="required"/>
+    <xsd:simpleContent>
+      <xsd:extension base="ContentType">
+        <xsd:attribute name="name" type="NameType" use="required" />
+        <xsd:attribute name="invalid" type="xsd:boolean" />
+        <!-- need to add enums here -->
+        <xsd:attribute name="refresh-mode" type="xsd:string" />
+        <xsd:attribute name="refresh-method" type="xsd:string" />
+        <xsd:attribute name="build-mode" type="xsd:string" />
+        <xsd:attribute name="source" type="ContentType" />
+      </xsd:extension>
+    </xsd:simpleContent>
   </xsd:complexType>
   <xsd:complexType name="ViewType">
     <xsd:sequence>
+      <xsd:element name="definition" type="ContentType" minOccurs="0" maxOccurs="1" />
       <xsd:element name="column" type="ColumnType" minOccurs="0" maxOccurs="unbounded" />
     </xsd:sequence>
     <xsd:attribute name="name" type="NameType" use="required" />
@@ -196,10 +206,14 @@ schema = StringIO("""
     <xsd:attribute name="comment" type="ContentType" />
   </xsd:complexType>
   <xsd:complexType name="TriggerType">
-    <xsd:attribute name="name" type="NameType" use="required" />
-    <xsd:attribute name="object-type" type="TriggerObjectEnum" use="required" />
-    <xsd:attribute name="object-name" type="NameType" use="required" />
-    <xsd:attribute name="definition" type="ContentType" use="required" />
+    <xsd:simpleContent>
+      <xsd:extension base="ContentType">
+        <xsd:attribute name="name" type="NameType" use="required" />
+        <xsd:attribute name="object-type" type="TriggerObjectEnum" use="required" />
+        <xsd:attribute name="object-name" type="NameType" use="required" />
+        <xsd:attribute name="definition" type="ContentType" />
+      </xsd:extension>
+    </xsd:simpleContent>
   </xsd:complexType>
   <!--                    -->
   <!-- the database state -->
