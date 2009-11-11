@@ -2,11 +2,12 @@ import os, re, stat, subprocess
 from UserDict import DictMixin
 
 class Property(object):
-    def __init__(self, name, default=None, translator=None, exclude=False):
+    def __init__(self, name, default=None, translator=None, exclude=False, cdata=False):
         self.name       = name
         self.default    = default
         self.translator = translator or (lambda value: value)
         self.exclude    = exclude
+        self.cdata      = cdata
 
     def __call__(self, object, value):
         if value:
@@ -32,7 +33,7 @@ def sql_escape(string):
     if not string:
         return ""
     return string.replace("'", "''")
-    
+
 def trim_spaces(string):
     if not string:
         return string
@@ -105,7 +106,7 @@ except:
         # mark it as a version 4 UUID
         number &= ~(0xf000 << 64L)
         number |= 4 << 76L
-        
+
         hex = '%032x' % number
         return '%s-%s-%s-%s-%s' % (hex[:8], hex[8:12], hex[12:16], hex[16:20], hex[20:])
 

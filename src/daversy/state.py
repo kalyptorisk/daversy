@@ -61,7 +61,7 @@ class FileState:
                 sql += builder.createSQL(item)
                 if hasattr(builder, 'commentSQL'):
                     comment.extend(builder.commentSQL(item))
-                    
+
         commentSQL = "\n".join(comment)
 
         if type == 'all':
@@ -109,7 +109,11 @@ class FileState:
         object = builder.DbClass()
         if hasattr(builder, 'PropertyList'):
             for prop in builder.PropertyList.values():
-                if not prop.exclude:
+                if prop.exclude:
+                    continue
+                if prop.cdata:
+                    object[prop.name] = node.text or prop.default
+                else:
                     object[prop.name] = node.get(prop.name) or prop.default
 
         # check if it is excluded
@@ -134,7 +138,10 @@ class FileState:
         if hasattr(builder, 'PropertyList'):
             for key, value in builder.PropertyList.items():
                 if not value.exclude and object[value.name]:
-                    subnode.attrib[value.name] = object[value.name]
+                    if not value.cdata:
+                        subnode.attrib[value.name] = object[value.name]
+                    else:
+                        subnode.text = etree.CDATA(object[value.name])
 
         # save sub-elements
         if hasattr(object, 'SubElements'):
@@ -272,9 +279,9 @@ def create_filter(filename, included_tags, excluded_tags):
 def is_allowed(object, filters):
     if filters is None or not object.has_key('name'):
         return True
-        
+
     include_list, exclude_list = filters
-    
+
     allowed = False
     for filter in include_list:
         if filter.match(object['name']):
