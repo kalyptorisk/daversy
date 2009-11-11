@@ -644,7 +644,6 @@ class SyncDb(DvsOracleTool):
         self.config_dir     = os.path.join(base_dir, 'config')
         self.migration_dir  = os.path.join(base_dir, 'migration')
         self.filter_config  = os.path.join(self.config_dir, 'schema.ini')
-        self.version_config = os.path.join(self.config_dir, 'version.ini')
         self.migration_conf = os.path.join(self.migration_dir, 'migration.ini')
 
         self.changelog      = os.path.join(base_dir, 'changes.txt')
@@ -653,16 +652,9 @@ class SyncDb(DvsOracleTool):
         self.current_state  = os.path.join(base_dir, 'current.state')
         self.latest_state   = self.tempfile(ext='.state')
 
-        # check for changes
-        versions = ConfigParser.ConfigParser()
-        versions.read(self.version_config)
-
-        if not versions.has_option('version', 'current'):
-            self.message('Version configuration file is missing or invalid, aborting.')
-            self.quit(CMDLINE)
-
-        self.current_version = versions.get('version', 'current')
-        self.next_version    = versions.get('version', 'next')
+        self.execute_cmd('getting current version', ['dvs', 'name', self.current_state])
+        self.current_version = self.output
+        self.next_version    = get_uuid4()
 
         self.execute_cmd('extracting latest database state',
                          ['dvs', 'copy', '-f', self.filter_config,
@@ -694,17 +686,18 @@ class SyncDb(DvsOracleTool):
             self.message('migration check succeeded')
             self.generate_diff(self.current_state, self.latest_state)
 
-        self.message('generating new version numbers')
-        new_version = get_uuid4()
-        versions.set('version', 'current', self.next_version)
-        versions.set('version', 'next',    new_version)
-
-        version_file = file(self.version_config, 'w')
-        versions.write(version_file)
-        version_file.close()
-
         self.execute_sql('synchronizing version numbers',
                          UPDATESCHEMA_SQL % (self.next_version, '** migrations tested **'))
+
+        # update SQL files with the correct version
+        for migration in glob.glob(self.migration_dir+'/*.sql'):
+            data = self.read_file(migration)
+            match = MIGRATION_REGEX.match(data)
+            if not match:
+                continue
+            source, target, description = match.groups()
+            if target == 'next-version':
+                self.write_file(migration, data.replace('next-version', self.target_version))
 
         self.message('updating the change log')
         migration_changes = []
