@@ -111,10 +111,16 @@ class FileState:
             for prop in builder.PropertyList.values():
                 if prop.exclude:
                     continue
-                if prop.cdata:
-                    object[prop.name] = node.text or prop.default
-                else:
+                if not prop.cdata:
                     object[prop.name] = node.get(prop.name) or prop.default
+                else:
+                    if not hasattr(object, 'SubElements'):
+                        object[prop.name] = node.text or prop.default
+                    else:
+                        for sub in node:
+                            tag = '}' in sub.tag and sub.tag[sub.tag.index('}')+1:] or sub.tag
+                            if tag == prop.name:
+                                object[prop.name] = sub.text or prop.default
 
         # check if it is excluded
         if not is_allowed( object, filters.get(builder.XmlTag) ):
@@ -141,7 +147,11 @@ class FileState:
                     if not value.cdata:
                         subnode.attrib[value.name] = object[value.name]
                     else:
-                        subnode.text = etree.CDATA(object[value.name])
+                        if not hasattr(object, 'SubElements'):
+                            subnode.text = etree.CDATA(object[value.name])
+                        else:
+                            cdata = etree.SubElement(subnode, value.name)
+                            cdata.text = etree.CDATA(object[value.name])
 
         # save sub-elements
         if hasattr(object, 'SubElements'):
