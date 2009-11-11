@@ -482,6 +482,8 @@ class MigrateDb(DvsOracleTool):
                 self.message('[%s] is not a valid migration.' % os.path.basename(file))
                 continue
             source, target, description = match.groups()
+            if target == 'next-version':
+                target = self.target_version
 
             entry = self.migrations.setdefault(source, {})
             entry[target] = (description, [data])
