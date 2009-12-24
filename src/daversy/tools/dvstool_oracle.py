@@ -611,7 +611,7 @@ class MigrateDb(DvsOracleTool):
         desc, migr = self.migrations[src][tgt]
         self.migrations[src][tgt] = (' '.join(new_desc), migr)
 
-    def get_scripts(dir, scripts):
+    def get_scripts(self, dir, scripts):
         result = []
         for file in scripts:
             if os.path.isfile(os.path.join(dir, file)):
