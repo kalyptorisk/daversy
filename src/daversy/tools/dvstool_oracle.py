@@ -616,6 +616,7 @@ class MigrateDb(DvsOracleTool):
         for file in scripts:
             if os.path.isfile(os.path.join(dir, file)):
                 result.append(open(os.path.join(dir, file), 'r').read())
+        return result
 
 class SyncDb(DvsOracleTool):
     def __main__(self):
