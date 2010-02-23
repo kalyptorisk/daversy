@@ -921,7 +921,7 @@ WHERE  schema_timestamp = ( SELECT MAX(schema_timestamp) FROM schema_log );
 """
 
 GETVERSIONCOUNT_SQL = """
-SELECT COUNT(*) AS version_count
+SELECT COUNT(DISTINCT schema_version) AS version_count
 FROM   schema_log
 WHERE  schema_version IN ('%s');
 """
