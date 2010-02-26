@@ -685,20 +685,19 @@ class SyncDb(DvsOracleTool):
                 return 1
             self.message('', None)
             self.message('migration check succeeded')
+            # update SQL files with the correct version
+            for migration in glob.glob(self.migration_dir+'/*.sql'):
+                data = self.read_file(migration)
+                match = MIGRATION_REGEX.match(data)
+                if not match:
+                    continue
+                source, target, description = match.groups()
+                if target == 'next-version':
+                    self.write_file(migration, data.replace('next-version', self.next_version))
             self.generate_diff(self.current_state, self.latest_state)
 
         self.execute_sql('synchronizing version numbers',
                          UPDATESCHEMA_SQL % (self.next_version, '** migrations tested **'))
-
-        # update SQL files with the correct version
-        for migration in glob.glob(self.migration_dir+'/*.sql'):
-            data = self.read_file(migration)
-            match = MIGRATION_REGEX.match(data)
-            if not match:
-                continue
-            source, target, description = match.groups()
-            if target == 'next-version':
-                self.write_file(migration, data.replace('next-version', self.next_version))
 
         self.message('updating the change log')
         migration_changes = []
