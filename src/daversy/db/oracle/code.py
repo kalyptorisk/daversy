@@ -15,13 +15,15 @@ class CodeBuilder(object):
         for row in cursor:
             if name != row[0]:
                 if name is not None:
-                    builder.getObject(state, name).source = '\n'.join(text).lstrip('\n\t/ ')+'\n/'
+                    obj = builder.getObject(state, name)
+                    if obj: obj.source = '\n'.join(text).lstrip('\n\t/ ')+'\n/'
                 name = row[0]
                 text = []
             text.append(row[1].rstrip())
 
         if text:
-            builder.getObject(state, name).source = '\n'.join(text).lstrip('\n\t/ ')+'\n/'
+            obj = builder.getObject(state, name)
+            if obj: obj.source = '\n'.join(text).lstrip('\n\t/ ')+'\n/'
 
         cursor.close()
 
@@ -49,7 +51,7 @@ class StoredProcedureBuilder(CodeBuilder):
 
     @staticmethod
     def getObject(state, name):
-        return state.procedures[name]
+        return state.procedures.get(name)
 
     @staticmethod
     def addToState(state, procedure):
@@ -84,7 +86,7 @@ class FunctionBuilder(CodeBuilder):
 
     @staticmethod
     def getObject(state, name):
-        return state.functions[name]
+        return state.functions.get(name)
 
     @staticmethod
     def addToState(state, function):
@@ -132,7 +134,7 @@ class OraclePackageBuilder(CodeBuilder):
 
     @staticmethod
     def getObject(state, name):
-        return state.packages[name]
+        return state.packages.get(name)
 
     @staticmethod
     def addToState(state, package):
@@ -164,7 +166,7 @@ class OracleObjectTypeBuilder(CodeBuilder):
 
     @staticmethod
     def getObject(state, name):
-        return state.types[name]
+        return state.types.get(name)
 
     @staticmethod
     def addToState(state, type):
