@@ -15,7 +15,6 @@ class CheckConstraintBuilder(object):
         SELECT c.constraint_name, c.search_condition AS condition, c.table_name
         FROM   sys.user_constraints c
         WHERE  c.constraint_type = 'C'
-        AND    c.constraint_name not like '%$%'
         ORDER BY c.table_name, c.constraint_name
     """
 

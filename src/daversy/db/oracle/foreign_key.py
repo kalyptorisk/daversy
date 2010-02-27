@@ -17,7 +17,6 @@ class ForeignKeyColumnBuilder(object):
         AND    k.constraint_name = kc.constraint_name
         AND    r.constraint_name = rc.constraint_name
         AND    kc.position       = rc.position
-        AND    k.constraint_name NOT LIKE '%$%'
         ORDER BY k.constraint_name, kc.position
     """
 
@@ -47,7 +46,6 @@ class ForeignKeyBuilder(object):
         WHERE  k.constraint_type = 'R'
         AND    r.constraint_type IN ('P', 'U')
         AND    k.r_constraint_name = r.constraint_name
-        AND    k.constraint_name NOT LIKE '%$%'
         ORDER BY k.constraint_name
     """
 

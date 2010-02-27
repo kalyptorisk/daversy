@@ -19,7 +19,6 @@ class PrimaryKeyColumnBuilder(object):
         FROM   sys.user_constraints c, sys.user_cons_columns cols
         WHERE  c.constraint_name = cols.constraint_name
         AND    c.constraint_type = 'P'
-        AND    c.constraint_name NOT LIKE '%$%'
         ORDER BY c.constraint_name, cols.position
     """
 
@@ -41,7 +40,6 @@ class PrimaryKeyBuilder(object):
         SELECT c.constraint_name AS name, c.table_name
         FROM   sys.user_constraints c
         WHERE  c.constraint_type = 'P'
-        AND    c.constraint_name NOT LIKE '%$%'
         ORDER BY c.constraint_name
     """
 

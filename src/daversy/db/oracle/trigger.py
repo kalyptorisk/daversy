@@ -12,7 +12,6 @@ class TriggerBuilder(object):
                replace(dbms_metadata.get_ddl('TRIGGER', trigger_name),
                        '"' || user || '".') AS definition
         FROM   sys.user_triggers
-        WHERE  trigger_name NOT LIKE 'BIN$%'
         ORDER BY trigger_name
     """
     PropertyList = odict(

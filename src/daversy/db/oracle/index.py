@@ -17,7 +17,6 @@ class IndexColumnBuilder(object):
         AND    i.table_name = c.table_name
         AND    c.index_name = e.index_name (+)
         AND    c.column_position = e.column_position (+)
-        AND    i.index_name NOT LIKE '%$%'
         ORDER BY i.index_name, c.column_position
     """
 
@@ -50,7 +49,6 @@ class IndexBuilder(object):
                decode(i.uniqueness, 'UNIQUE', 'true', 'false') AS is_unique
         FROM   sys.user_indexes i
         WHERE  i.index_type IN ('NORMAL', 'FUNCTION-BASED NORMAL')
-        AND    i.index_name NOT LIKE '%$%'
         ORDER BY i.index_name
     """
 
