@@ -38,8 +38,6 @@ class TableColumnBuilder(object):
         WHERE  tc.table_name  = c.table_name
         AND    tc.column_name = c.column_name
         AND    tc.data_type_owner IS NULL
-        AND EXISTS (SELECT table_name FROM sys.user_tables
-                    WHERE  table_name = tc.table_name)
         ORDER BY tc.table_name, tc.column_id
     """
 
@@ -53,9 +51,6 @@ class TableColumnBuilder(object):
         if table:
             column.comment = trim_spaces(column.comment)
             table.columns[column.name] = column
-        elif state.ext_tables.get(column['parent-name']):
-            ext_table = state.ext_tables.get(column['parent-name'])
-            ext_table.columns[column.name] = column
 
     @staticmethod
     def sql(column):
@@ -110,8 +105,6 @@ class ViewColumnBuilder(object):
         FROM   sys.user_tab_columns vc, sys.user_col_comments c
         WHERE  vc.table_name  = c.table_name
         AND    vc.column_name = c.column_name
-        AND EXISTS (SELECT view_name FROM sys.user_views
-                    WHERE  view_name = vc.table_name)
         ORDER BY vc.table_name, vc.column_id
     """
 

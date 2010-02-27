@@ -2,8 +2,7 @@ from daversy.db        import Database, Builder
 from daversy.db.object import *
 from daversy.utils     import *
 
-from table       import TableBuilder, OracleExternalTable 
-from table       import OracleExternalTableBuilder, OracleExternalTableLocationBuilder
+from table       import TableBuilder
 from column      import TableColumnBuilder, ViewColumnBuilder
 from primary_key import PrimaryKeyBuilder, PrimaryKeyColumnBuilder
 from unique_key  import UniqueKeyBuilder, UniqueKeyColumnBuilder
@@ -28,7 +27,6 @@ class OracleState(DbObject):
     """This represents the elements that are available in an oracle database."""
     SubElements = odict( ('types',        OracleObjectType),
                          ('tables',       Table),
-                         ('ext_tables',   OracleExternalTable),
                          ('sequences',    Sequence),
                          ('indexes',      Index),
                          ('foreign_keys', ForeignKey),
@@ -56,8 +54,6 @@ class OracleDatabase(Database):
     __builders__ = [OracleStateBuilder(),
                     OracleObjectTypeBuilder(),
                     TableBuilder(),
-                    OracleExternalTableBuilder(),
-                    OracleExternalTableLocationBuilder(),
                     TableColumnBuilder(),
                     PrimaryKeyBuilder(),
                     PrimaryKeyColumnBuilder(),

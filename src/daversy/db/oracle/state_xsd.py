@@ -85,10 +85,6 @@ schema = StringIO("""
     <xsd:attribute name="name" type="xsd:string" use="required" />
     <xsd:attribute name="sort" type="IndexSortEnum" use="required" />
   </xsd:complexType>
-  <xsd:complexType name="ExternalLocationType">
-    <xsd:attribute name="name" type="xsd:string" use="required" />
-    <xsd:attribute name="base-dir" type="xsd:string" use="required" />
-  </xsd:complexType>
   <xsd:complexType name="ConstraintColumnType">
     <xsd:attribute name="name" type="NameType" use="required" />
   </xsd:complexType>
@@ -144,16 +140,6 @@ schema = StringIO("""
     <xsd:attribute name="temporary" type="xsd:boolean" />
     <xsd:attribute name="on-commit-preserve-rows" type="xsd:boolean" />
     <xsd:attribute name="comment" type="ContentType" />
-  </xsd:complexType>
-  <xsd:complexType name="ExternalTableType">
-    <xsd:sequence>
-      <xsd:element name="location" type="ExternalLocationType" minOccurs="1" maxOccurs="unbounded" />
-      <xsd:element name="column" type="ColumnType" minOccurs="1" maxOccurs="unbounded" />
-    </xsd:sequence>
-    <xsd:attribute name="name" type="NameType" use="required" />
-    <xsd:attribute name="default-dir" type="xsd:string" use="required" />
-    <xsd:attribute name="reject-limit" type="xsd:string" use="required" />
-    <xsd:attribute name="parameters" type="ContentType" use="required" />
   </xsd:complexType>
   <xsd:complexType name="SequenceType">
     <xsd:attribute name="name" type="NameType" use="required" />
@@ -223,7 +209,6 @@ schema = StringIO("""
       <xsd:sequence>
         <xsd:element name="type" type="SourceType" minOccurs="0" maxOccurs="unbounded" />
         <xsd:element name="table" type="TableType" minOccurs="1" maxOccurs="unbounded" />
-        <xsd:element name="external-table" type="ExternalTableType" minOccurs="0" maxOccurs="unbounded" />
         <xsd:element name="sequence" type="SequenceType" minOccurs="0" maxOccurs="unbounded" />
         <xsd:element name="index" type="IndexType" minOccurs="0" maxOccurs="unbounded" />
         <xsd:element name="foreign-key" type="ForeignKeyType" minOccurs="0" maxOccurs="unbounded" />

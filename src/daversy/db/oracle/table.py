@@ -21,12 +21,6 @@ class TableBuilder(object):
         FROM   sys.user_tables t, sys.user_tab_comments c
         WHERE  t.table_name = c.table_name
         AND    c.table_type = 'TABLE'
-        AND    t.table_name NOT LIKE '%$%'
-        AND    NOT EXISTS (
-                  SELECT table_name
-                  FROM   sys.user_external_tables
-                  WHERE  table_name = t.table_name
-               )
         ORDER BY t.table_name
     """
     PropertyList = odict(
@@ -75,84 +69,3 @@ class TableBuilder(object):
             comments.append(TableColumnBuilder.commentSQL(table, column))
 
         return comments
-
-class OracleExternalTableLocation(DbObject):
-    """ A class that represents a location for an oracle external table. """
-
-class OracleExternalTable(DbObject):
-    """ A class that represents an oracle external table. """
-    SubElements = odict( ('locations',    OracleExternalTableLocation),
-                         ('columns',      TableColumn)                  )
-
-class OracleExternalTableBuilder(object):
-    """Represents a builder for an external table."""
-
-    DbClass = OracleExternalTable
-    XmlTag  = 'external-table'
-
-    Query = """
-        SELECT t.table_name, t.default_directory_name AS default_dir,
-               t.reject_limit, t.access_parameters AS param
-        FROM   sys.user_external_tables t
-        WHERE  t.table_name NOT LIKE '%$%'
-        ORDER BY t.table_name
-    """
-    PropertyList = odict(
-        ('TABLE_NAME',    Property('name')),
-        ('DEFAULT_DIR',   Property('default-dir')),
-        ('REJECT_LIMIT',  Property('reject-limit')),
-        ('PARAM',         Property('parameters'))
-    )
-
-    @staticmethod
-    def addToState(state, ext_table):
-        ext_table.parameters = trim_spaces(ext_table.parameters)
-        state.ext_tables[ext_table.name] = ext_table
-
-    @staticmethod
-    def createSQL(ext_table):
-        sql  = "CREATE TABLE %(name)s (\n  %(col_sql)s\n)\n"
-        sql += "ORGANIZATION EXTERNAL (\n  DEFAULT DIRECTORY %(default-dir)s"
-        sql += "\n  ACCESS PARAMETERS (\n    %(parameters)s\n  )"
-        sql += "\n  LOCATION (\n    %(loc_sql)s\n  )\n)\n"
-        sql += "REJECT LIMIT %(reject-limit)s\n/\n"
-
-        col_def, loc_def = [], []
-
-        for col in ext_table.columns.values():
-            col_def.append(TableColumnBuilder.sql(col))
-        for loc in ext_table.locations.values():
-            loc_def.append(OracleExternalTableLocationBuilder.sql(loc))
-
-        col_sql = ",\n  ".join(col_def)
-        loc_sql = ",\n  ".join(loc_def)
-
-        return render(sql, ext_table, col_sql=col_sql, loc_sql=loc_sql)
-
-class OracleExternalTableLocationBuilder(object):
-    """Represents a builder for a location in an external table. """
-
-    DbClass = OracleExternalTableLocation
-    XmlTag  = 'location'
-
-    Query = """
-        SELECT l.table_name, l.directory_name AS base_dir, l.location
-        FROM   sys.user_external_locations l
-        WHERE  l.table_name NOT LIKE '%$%'
-    """
-    PropertyList = odict(
-        ('TABLE_NAME',  Property('table-name', exclude=True)),
-        ('LOCATION',    Property('name')),
-        ('BASE_DIR',    Property('base-dir'))
-    )
-
-    @staticmethod
-    def addToState(state, location):
-        table = state.ext_tables.get(location['table-name'])
-        if table:
-            table.locations[location.name] = location
-
-    @staticmethod
-    def sql(location):
-        return "%s: '%s'" % (location['base-dir'],
-                             sql_escape(location['name']))
