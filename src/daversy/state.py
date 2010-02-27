@@ -188,10 +188,12 @@ class DatabaseState(object):
         connection = db.__conn__(params)
 
         for builder in db.__builders__:
-            print "Extracing %s" % builder.DbClass.__name__
+            print "Extracting %s" % builder.DbClass.__name__
             if hasattr(builder, 'Query'):
                 self._load_object(connection.cursor(), state,
                                   builder, filters.get(builder.XmlTag))
+            if hasattr(builder, 'customQuery'):
+                builder.customQuery(connection.cursor(), state, builder)
 
         connection.close()
         return state

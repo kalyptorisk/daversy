@@ -1,17 +1,41 @@
 from daversy.utils import *
 from daversy.db.object import DbObject, Function, StoredProcedure
 
-class StoredProcedureBuilder(object):
+class CodeBuilder(object):
+    @staticmethod
+    def customQuery(cursor, state, builder):
+        cursor.execute("""
+            SELECT name, DECODE(line, 1, '/'||chr(10)||'CREATE OR REPLACE ', '')||text
+            FROM   user_source
+            WHERE  type IN ('%s')
+            ORDER BY name, type, line""" % "', '".join(builder.DbType))
+
+        name = None
+        text = []
+        for row in cursor:
+            if name != row[0]:
+                if name is not None:
+                    builder.getObject(state, name).source = '\n'.join(text).lstrip('\n\t/ ')+'\n/'
+                name = row[0]
+                text = []
+            text.append(row[1].rstrip())
+
+        if text:
+            builder.getObject(state, name).source = '\n'.join(text).lstrip('\n\t/ ')+'\n/'
+
+        cursor.close()
+
+class StoredProcedureBuilder(CodeBuilder):
     """Represents a builder for a stored procedure."""
 
     DbClass = StoredProcedure
     XmlTag  = 'stored-procedure'
+    DbType  = ['PROCEDURE']
 
     Query = """
         SELECT object_name,
                decode(status, 'INVALID', 'true') AS invalid,
-               replace(dbms_metadata.get_ddl(object_type, object_name),
-                       '"' || user || '".') AS source
+               NULL AS source
         FROM   sys.user_objects
         WHERE  object_type = 'PROCEDURE'
         AND    object_name NOT LIKE '%$%'
@@ -20,8 +44,12 @@ class StoredProcedureBuilder(object):
     PropertyList = odict(
         ('OBJECT_NAME', Property('name')),
         ('INVALID',     Property('invalid')),
-        ('SOURCE',      Property('source', None, lambda x: x.read(), cdata=True))
+        ('SOURCE',      Property('source', cdata=True))
     )
+
+    @staticmethod
+    def getObject(state, name):
+        return state.procedures[name]
 
     @staticmethod
     def addToState(state, procedure):
@@ -32,17 +60,17 @@ class StoredProcedureBuilder(object):
     def createSQL(procedure):
         return procedure.source + '\n\n'
 
-class FunctionBuilder(object):
+class FunctionBuilder(CodeBuilder):
     """Represents a builder for a database function."""
 
     DbClass = Function
     XmlTag  = 'function'
+    DbType  = ['FUNCTION']
 
     Query = """
         SELECT object_name,
                decode(status, 'INVALID', 'true') AS invalid,
-               replace(dbms_metadata.get_ddl(object_type, object_name),
-                       '"' || user || '".') AS source
+               NULL AS source
         FROM   sys.user_objects
         WHERE  object_type = 'FUNCTION'
         AND    object_name NOT LIKE '%$%'
@@ -51,8 +79,12 @@ class FunctionBuilder(object):
     PropertyList = odict(
         ('OBJECT_NAME', Property('name')),
         ('INVALID',     Property('invalid')),
-        ('SOURCE',      Property('source', None, lambda x: x.read(), cdata=True))
+        ('SOURCE',      Property('source', cdata=True))
     )
+
+    @staticmethod
+    def getObject(state, name):
+        return state.functions[name]
 
     @staticmethod
     def addToState(state, function):
@@ -70,23 +102,23 @@ class OraclePackage(DbObject):
 
 class OracleObjectType(DbObject):
     """ A class that represents an oracle object type. """
-    
+
 class OracleMaterializedView(DbObject):
     """ A class that represents an oracle materialized view. """
 
 #############################################################################
 
-class OraclePackageBuilder(object):
+class OraclePackageBuilder(CodeBuilder):
     """Represents a builder for an oracle package."""
 
     DbClass = OraclePackage
     XmlTag  = 'package'
+    DbType  = ['PACKAGE', 'PACKAGE BODY']
 
     Query = """
         SELECT object_name,
                decode(status, 'INVALID', 'true') AS invalid,
-               replace(dbms_metadata.get_ddl('PACKAGE', object_name),
-                       '"' || user || '".') AS source
+               NULL AS source
         FROM   sys.user_objects
         WHERE  object_type = 'PACKAGE'
         AND    object_name NOT LIKE '%$%'
@@ -95,8 +127,12 @@ class OraclePackageBuilder(object):
     PropertyList = odict(
         ('OBJECT_NAME', Property('name')),
         ('INVALID',     Property('invalid')),
-        ('SOURCE',      Property('source', None, lambda x: x.read(), cdata=True))
+        ('SOURCE',      Property('source', cdata=True))
     )
+
+    @staticmethod
+    def getObject(state, name):
+        return state.packages[name]
 
     @staticmethod
     def addToState(state, package):
@@ -107,24 +143,28 @@ class OraclePackageBuilder(object):
     def createSQL(package):
         return package.source + '\n\n'
 
-class OracleObjectTypeBuilder(object):
+class OracleObjectTypeBuilder(CodeBuilder):
     """Represents a builder for an oracle object type."""
 
     DbClass = OracleObjectType
     XmlTag  = 'type'
+    DbType  = ['TYPE', 'TYPE BODY']
 
     Query = """
         SELECT type_name,
-               replace(dbms_metadata.get_ddl('TYPE', type_name),
-                       '"' || user || '".') AS source
+               NULL AS source
         FROM   sys.user_types
         WHERE  type_name NOT LIKE '%$%'
         ORDER BY typecode DESC, type_name
     """
     PropertyList = odict(
         ('TYPE_NAME', Property('name')),
-        ('SOURCE',    Property('source', None, lambda x: x.read(), cdata=True))
+        ('SOURCE',    Property('source', cdata=True))
     )
+
+    @staticmethod
+    def getObject(state, name):
+        return state.types[name]
 
     @staticmethod
     def addToState(state, type):
@@ -143,12 +183,12 @@ class OracleMaterializedViewBuilder(object):
     XmlTag  = 'materialized-view'
 
     Query = """
-        SELECT mview_name, 
+        SELECT mview_name,
                decode(compile_state, 'INVALID', 'true') AS invalid,
-               lower(refresh_mode) AS refresh_mode, 
+               lower(refresh_mode) AS refresh_mode,
                lower(refresh_method) AS refresh_method,
                lower(build_mode) AS build_mode,
-               query AS source               
+               query AS source
         FROM   sys.user_mviews
         WHERE  mview_name NOT LIKE '%$%'
         ORDER BY mview_name
