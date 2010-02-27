@@ -695,6 +695,9 @@ class SyncDb(DvsOracleTool):
                 if target == 'next-version':
                     self.write_file(migration, data.replace('next-version', self.next_version))
             self.generate_diff(self.current_state, self.latest_state)
+            cleaner = CleanDb()
+            cleaner.connectString = self.tempConnectString
+            cleaner.run()
 
         self.execute_sql('synchronizing version numbers',
                          UPDATESCHEMA_SQL % (self.next_version, '** migrations tested **'))
