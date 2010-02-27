@@ -19,7 +19,7 @@ class Property(object):
                 new_value = raw_str.decode('utf-8')
 
             object[self.name] = new_value.replace('\x00','').strip()
-        elif self.default:
+        elif self.default is not None:
             object[self.name] = str(self.default)
         else:
             object[self.name] = None
