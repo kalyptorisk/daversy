@@ -5,7 +5,7 @@ class CodeBuilder(object):
     @staticmethod
     def customQuery(cursor, state, builder):
         cursor.execute("""
-            SELECT name, DECODE(line, 1, '/'||chr(10)||'CREATE OR REPLACE ', '')||text
+            SELECT name, text, DECODE(line, 1, '/'||chr(10)||'CREATE OR REPLACE ', '') AS prefix
             FROM   user_source
             WHERE  type IN ('%s')
             ORDER BY name, type, line""" % "', '".join(builder.DbType))
@@ -19,7 +19,7 @@ class CodeBuilder(object):
                     if obj: obj.source = '\n'.join(text).lstrip('\n\t/ ')+'\n/'
                 name = row[0]
                 text = []
-            text.append(row[1].rstrip())
+            text.append((row[2] or '')+row[1].rstrip())
 
         if text:
             obj = builder.getObject(state, name)
