@@ -19,7 +19,7 @@ class CodeBuilder(object):
                     if obj: obj.source = '\n'.join(text).lstrip('\n\t/ ')+'\n/'
                 name = row[0]
                 text = []
-            text.append((row[2] or '')+row[1].rstrip())
+            text.append((row[2] or '')+row[1].rstrip().lstrip('\n'))
 
         if text:
             obj = builder.getObject(state, name)
