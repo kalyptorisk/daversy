@@ -78,6 +78,12 @@ schema = StringIO("""
           <xsd:enumeration value="view" />
       </xsd:restriction>
   </xsd:simpleType>
+  <xsd:simpleType name="DeferTypeEnum">
+      <xsd:restriction base="xsd:normalizedString">
+          <xsd:enumeration value="immediate" />
+          <xsd:enumeration value="deferred" />
+      </xsd:restriction>
+  </xsd:simpleType>
   <!--                  -->
   <!-- basic data types -->
   <!--                  -->
@@ -104,11 +110,13 @@ schema = StringIO("""
       <xsd:element name="constraint-column" type="ConstraintColumnType" minOccurs="1" maxOccurs="unbounded" />
     </xsd:sequence>
     <xsd:attribute name="name" type="NameType" />
+    <xsd:attribute name="defer-type" type="DeferTypeEnum" />
   </xsd:complexType>
   <xsd:complexType name="CheckConstraintType">
     <xsd:simpleContent>
       <xsd:extension base="ContentType">
         <xsd:attribute name="name" type="NameType" />
+        <xsd:attribute name="defer-type" type="DeferTypeEnum" />
         <xsd:attribute name="condition" type="ContentType" />
       </xsd:extension>
     </xsd:simpleContent>
@@ -168,6 +176,7 @@ schema = StringIO("""
       <xsd:attribute name="table" type="NameType" use="required" />
       <xsd:attribute name="reference-table" type="NameType" use="required" />
       <xsd:attribute name="delete-rule" type="ReferentialDeleteEnum" use="required"/>
+      <xsd:attribute name="defer-type" type="DeferTypeEnum" />
   </xsd:complexType>
   <xsd:complexType name="MaterializedViewType">
     <xsd:simpleContent>

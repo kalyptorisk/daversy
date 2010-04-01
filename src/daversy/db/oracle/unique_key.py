@@ -38,7 +38,8 @@ class UniqueKeyBuilder(object):
     XmlTag  = 'unique-key'
 
     Query = """
-        SELECT c.constraint_name AS name, c.table_name
+        SELECT c.constraint_name AS name, c.table_name,
+               DECODE(c.deferrable, 'DEFERRABLE', lower(c.deferred)) AS defer_type
         FROM   sys.user_constraints c
         WHERE  c.constraint_type = 'U'
         AND    c.constraint_name NOT LIKE '%$%'
@@ -47,6 +48,7 @@ class UniqueKeyBuilder(object):
 
     PropertyList = odict(
         ('NAME',       Property('name')),
+        ('DEFER_TYPE', Property('defer-type')),
         ('TABLE_NAME', Property('table-name', exclude=True))
     )
 
@@ -59,6 +61,8 @@ class UniqueKeyBuilder(object):
     @staticmethod
     def sql(key):
         definition = "CONSTRAINT %(name)s UNIQUE ( %(columns)s )"
+        if key['defer-type']:
+            definition += " DEFERRABLE INITIALLY %(defer-type)s"
 
         columns = ", ".join([column.name for column in key.columns.values()])
 

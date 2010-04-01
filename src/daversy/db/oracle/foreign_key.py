@@ -41,7 +41,8 @@ class ForeignKeyBuilder(object):
 
     Query = """
         SELECT k.constraint_name, k.table_name AS key_table, r.table_name AS reference_table,
-               lower(k.delete_rule) AS delete_rule
+               lower(k.delete_rule) AS delete_rule,
+               DECODE(k.deferrable, 'DEFERRABLE', lower(k.deferred)) AS defer_type
         FROM   sys.user_constraints k, sys.user_constraints r
         WHERE  k.constraint_type = 'R'
         AND    r.constraint_type IN ('P', 'U')
@@ -53,7 +54,8 @@ class ForeignKeyBuilder(object):
         ('CONSTRAINT_NAME',  Property('name')),
         ('KEY_TABLE',        Property('table')),
         ('REFERENCE_TABLE',  Property('reference-table')),
-        ('DELETE_RULE',      Property('delete-rule'))
+        ('DELETE_RULE',      Property('delete-rule')),
+        ('DEFER_TYPE',       Property('defer-type'))
     )
 
     @staticmethod
@@ -66,15 +68,19 @@ class ForeignKeyBuilder(object):
     def createSQL(fk):
         sql = "ALTER TABLE %(table)s ADD CONSTRAINT %(name)s\n" \
               "FOREIGN KEY ( %(key_columns)s )\n"   \
-              "REFERENCES  %(reference-table)s ( %(ref_columns)s ) %(on_delete)s;\n\n"
+              "REFERENCES  %(reference-table)s ( %(ref_columns)s ) %(on_delete)s %(defer_sql)s;\n\n"
 
         on_delete = ''
         if fk['delete-rule'] != 'no action':
             on_delete = 'ON DELETE ' + fk['delete-rule']
+        
+        defer_sql = ''
+        if fk['defer-type']:
+            defer_sql += " DEFERRABLE INITIALLY "+fk['defer-type']
 
         key_sql = ", ".join([rel.name      for rel in fk.columns.values()])
         ref_sql = ", ".join([rel.reference for rel in fk.columns.values()])
 
         return render(sql, fk, key_columns=key_sql, ref_columns=ref_sql,
-                       on_delete=on_delete)
+                       on_delete=on_delete, defer_sql=defer_sql)
 

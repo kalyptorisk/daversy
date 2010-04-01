@@ -12,7 +12,8 @@ class CheckConstraintBuilder(object):
     XmlTag  = 'check-constraint'
 
     Query = """
-        SELECT c.constraint_name, c.search_condition AS condition, c.table_name
+        SELECT c.constraint_name, c.search_condition AS condition, c.table_name,
+               DECODE(c.deferrable, 'DEFERRABLE', lower(c.deferred)) AS defer_type
         FROM   sys.user_constraints c
         WHERE  c.constraint_type = 'C'
         ORDER BY c.table_name, c.constraint_name
@@ -20,6 +21,7 @@ class CheckConstraintBuilder(object):
 
     PropertyList = odict(
         ('CONSTRAINT_NAME', Property('name')),
+        ('DEFER_TYPE',      Property('defer-type')),
         ('CONDITION',       Property('condition', cdata=True)),
         ('TABLE_NAME',      Property('table-name', exclude=True))
     )
@@ -39,4 +41,7 @@ class CheckConstraintBuilder(object):
 
     @staticmethod
     def sql(constraint):
-        return "CONSTRAINT %(name)s CHECK ( %(condition)s )" % constraint
+        if not constraint['defer-type']:
+            return "CONSTRAINT %(name)s CHECK ( %(condition)s )" % constraint
+
+        return "CONSTRAINT %(name)s CHECK ( %(condition)s ) DEFERRABLE INITIALLY %(defer-type)s" % constraint
