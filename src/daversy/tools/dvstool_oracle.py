@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, sys, re, datetime, ConfigParser, time
+import os, sys, re, datetime, ConfigParser, time, shutil
 import subprocess, glob, optparse, cStringIO, tempfile
 
 from daversy.utils                import get_uuid4
@@ -260,6 +260,11 @@ class WrapDb(DvsOracleTool):
         self.execute_cmd('generating schema DDL',
                          ['dvs', 'generate', '-s', 'all',
                           '-f', filter, source, ddl])
+
+        if not self.read_file(ddl).strip():
+            self.message('no objects need to be encoded, exiting.')
+            shutil.copy2(source, target)
+            return
 
         self.execute_cmd('encoding schema DDL',
                          ['wrap', 'iname='+ddl, 'oname=' + ddl+'.enc'])
