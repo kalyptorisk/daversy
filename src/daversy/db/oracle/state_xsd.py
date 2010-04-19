@@ -1,9 +1,9 @@
 from StringIO import StringIO
 
 schema = StringIO("""
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
-            xmlns="http://www.daversy.org/schemas/state/oracle" 
-            targetNamespace="http://www.daversy.org/schemas/state/oracle" 
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns="http://www.daversy.org/schemas/state/oracle"
+            targetNamespace="http://www.daversy.org/schemas/state/oracle"
             elementFormDefault="qualified" attributeFormDefault="unqualified">
   <!--                        -->
   <!-- basic name/value types -->
@@ -26,7 +26,7 @@ schema = StringIO("""
     <xsd:restriction base="xsd:normalizedString">
       <xsd:pattern value="[-\+]?[0-9]+"/>
     </xsd:restriction>
-  </xsd:simpleType>  
+  </xsd:simpleType>
   <!--                  -->
   <!-- basic enum types -->
   <!--                  -->
@@ -103,6 +103,8 @@ schema = StringIO("""
     <xsd:attribute name="scale" form="unqualified" type="xsd:nonNegativeInteger" />
     <xsd:attribute name="nullable" type="xsd:boolean" />
     <xsd:attribute name="notnull-defer-type" type="DeferTypeEnum" />
+    <xsd:attribute name="check" type="xsd:string" />
+    <xsd:attribute name="check-defer-type" type="DeferTypeEnum" />
     <xsd:attribute name="default-value" type="xsd:string" />
     <xsd:attribute name="comment" type="ContentType" />
   </xsd:complexType>

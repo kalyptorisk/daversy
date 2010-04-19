@@ -24,8 +24,10 @@ class TableColumnBuilder(object):
         ('DATA_DEFAULT',    Property('default-value')),
         ('COMMENTS',        Property('comment')),
         ('DEFER_TYPE',      Property('notnull-defer-type')),
+        ('CHK',             Property('check')),
+        ('CHK_DEFER_TYPE',  Property('check-defer-type')),
         ('PARENT_NAME',     Property('parent-name', exclude=True)),
-        ('COLUMN_ID',       Property('sequence',   exclude=True))        
+        ('COLUMN_ID',       Property('sequence',   exclude=True))
     )
 
     Query = """
@@ -34,7 +36,7 @@ class TableColumnBuilder(object):
                nvl2(tc.data_type_owner, tc.data_type, null) AS custom_type,
                nvl(tc.char_col_decl_length, tc.data_length) AS data_length,
                tc.data_precision, tc.data_scale, tc.nullable, tc.data_default,
-               c.comments, NULL AS defer_type
+               c.comments, NULL AS defer_type, NULL AS chk, NULL AS chk_defer_type
         FROM   sys.user_tab_columns tc, sys.user_col_comments c
         WHERE  tc.table_name  = c.table_name
         AND    tc.column_name = c.column_name
@@ -82,6 +84,11 @@ class TableColumnBuilder(object):
             result += ' not null'
             if column['notnull-defer-type']:
                 result += ' deferrable initially ' + column['notnull-defer-type']
+
+        if column.check:
+            result += ' check(%s)' % column.check
+            if column['check-defer-type']:
+                result += ' deferrable initially ' + column['check-defer-type']
 
         return result
 
