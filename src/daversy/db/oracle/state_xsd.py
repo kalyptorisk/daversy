@@ -102,6 +102,7 @@ schema = StringIO("""
     <xsd:attribute name="precision" type="xsd:nonNegativeInteger" />
     <xsd:attribute name="scale" form="unqualified" type="xsd:nonNegativeInteger" />
     <xsd:attribute name="nullable" type="xsd:boolean" />
+    <xsd:attribute name="notnull-defer-type" type="DeferTypeEnum" />
     <xsd:attribute name="default-value" type="xsd:string" />
     <xsd:attribute name="comment" type="ContentType" />
   </xsd:complexType>

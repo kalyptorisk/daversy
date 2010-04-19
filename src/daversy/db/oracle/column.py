@@ -23,8 +23,9 @@ class TableColumnBuilder(object):
         ('NULLABLE',        Property('nullable', 'true', lambda flag: YESNO_MAPPING[flag])),
         ('DATA_DEFAULT',    Property('default-value')),
         ('COMMENTS',        Property('comment')),
+        ('DEFER_TYPE',      Property('notnull-defer-type')),
         ('PARENT_NAME',     Property('parent-name', exclude=True)),
-        ('COLUMN_ID',       Property('sequence',   exclude=True))
+        ('COLUMN_ID',       Property('sequence',   exclude=True))        
     )
 
     Query = """
@@ -33,7 +34,7 @@ class TableColumnBuilder(object):
                nvl2(tc.data_type_owner, tc.data_type, null) AS custom_type,
                nvl(tc.char_col_decl_length, tc.data_length) AS data_length,
                tc.data_precision, tc.data_scale, tc.nullable, tc.data_default,
-               c.comments
+               c.comments, NULL AS defer_type
         FROM   sys.user_tab_columns tc, sys.user_col_comments c
         WHERE  tc.table_name  = c.table_name
         AND    tc.column_name = c.column_name
@@ -76,7 +77,12 @@ class TableColumnBuilder(object):
 
         if column['default-value']:
             result += ' default %s' % (column['default-value'].strip())
-        result += column.nullable == 'false' and ' not null' or ''
+
+        if column['nullable'] == 'false':
+            result += ' not null'
+            if column['notnull-defer-type']:
+                result += ' deferrable initially ' + column['notnull-defer-type']
+
         return result
 
     @staticmethod

@@ -35,8 +35,13 @@ class CheckConstraintBuilder(object):
                 match = COL_NOT_NULL.match(constraint.condition)
                 if match:
                     column = table.columns.get( match.group(2) )
-                    if column and column.nullable == 'false':
-                        return
+                    if column:
+                        if constraint.get('defer-type'):
+                            column['nullable'] = 'false'
+                            column['notnull-defer-type'] = constraint['defer-type']
+                            return
+                        elif column.nullable == 'false':
+                            return
             table.constraints[constraint.name] = constraint
 
     @staticmethod
