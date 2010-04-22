@@ -281,6 +281,7 @@ class WrapDb(DvsOracleTool):
 
         pkg = {}
         for source, objtype, name in encoded_data:
+            name = name.upper()
             if objtype in ['TYPE', 'PROCEDURE', 'FUNCTION']:
                 state[objtype.lower()+'s'][name].source = source.strip() + ';\n/'
 
