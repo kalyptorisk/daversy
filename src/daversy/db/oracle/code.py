@@ -12,18 +12,23 @@ class CodeBuilder(object):
 
         name = None
         text = []
+        sep, pre = '\n', ''
         for row in cursor:
             if name != row[0]:
                 if name is not None:
                     obj = builder.getObject(state, name)
-                    if obj: obj.source = '\n'.join(text).lstrip('\n\t/ ')+'\n/'
+                    if obj: obj.source = sep.join(text).lstrip('\n\t/ ')+'\n/'
                 name = row[0]
                 text = []
-            text.append((row[2] or '')+row[1].rstrip().lstrip('\n'))
+                sep, pre = '\n', ''
+                if '" wrapped\n' in row[1]:
+                    # it's wrapped, so don't join using newlines
+                    sep, pre = '', '\n'
+            text.append((row[2] and pre+row[2] or '')+row[1].rstrip().lstrip(sep))
 
         if text:
             obj = builder.getObject(state, name)
-            if obj: obj.source = '\n'.join(text).lstrip('\n\t/ ')+'\n/'
+            if obj: obj.source = sep.join(text).lstrip('\n\t/ ')+'\n/'
 
         cursor.close()
 
