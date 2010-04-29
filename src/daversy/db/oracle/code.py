@@ -12,7 +12,9 @@ class CodeBuilder(object):
 
         name = None
         text = []
-        sep, pre = '\n', ''
+        sep  = '\n'
+        norm = lambda x: (x[2] or '')+x[1].rstrip().lstrip('\n')
+        wrap = lambda x: (x[2] and '\n'+x[2] or '')+x[1]
         for row in cursor:
             if name != row[0]:
                 if name is not None:
@@ -20,11 +22,11 @@ class CodeBuilder(object):
                     if obj: obj.source = sep.join(text).lstrip('\n\t/ ')+'\n/'
                 name = row[0]
                 text = []
-                sep, pre = '\n', ''
-                if '" wrapped\n' in row[1]:
-                    # it's wrapped, so don't join using newlines
-                    sep, pre = '', '\n'
-            text.append((row[2] and pre+row[2] or '')+row[1].rstrip().lstrip(sep))
+                line = norm
+                if ' wrapped\n' in row[1]:
+                    # it's wrapped, so use a different method for joining
+                    sep, line = '', wrap
+            text.append(line(row))
 
         if text:
             obj = builder.getObject(state, name)
