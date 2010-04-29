@@ -10,7 +10,7 @@ schema = StringIO("""
   <!--                        -->
   <xsd:simpleType name="NameType">
     <xsd:restriction base="xsd:normalizedString">
-      <xsd:pattern value="[a-zA-Z0-9_#$=]{1,30}" />
+      <xsd:pattern value="[a-zA-Z0-9_#$=]{1,30}|generated:[a-z0-9]{40}" />
     </xsd:restriction>
   </xsd:simpleType>
   <xsd:simpleType name="ContentType">

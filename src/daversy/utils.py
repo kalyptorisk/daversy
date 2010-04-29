@@ -1,4 +1,4 @@
-import os, re, stat, subprocess
+import os, re, stat, subprocess, hashlib
 from UserDict import DictMixin
 
 class Property(object):
@@ -23,6 +23,9 @@ class Property(object):
             object[self.name] = str(self.default)
         else:
             object[self.name] = None
+
+def generated_name(*text):
+    return 'generated:'+hashlib.sha1('\n'.join([t.strip() for t in text])).hexdigest()
 
 def render(template, keys, **args):
     variables = keys.copy()

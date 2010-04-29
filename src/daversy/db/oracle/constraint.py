@@ -19,7 +19,7 @@ class CheckConstraintBuilder(object):
         )
         SELECT c.constraint_name, c.search_condition AS condition, c.table_name,
                DECODE(c.deferrable, 'DEFERRABLE', lower(c.deferred)) AS defer_type,
-               DECODE(c.generated, 'GENERATED NAME', l.column_name) AS column_name
+               l.column_name, DECODE(c.generated, 'GENERATED NAME', 'true') AS unnamed
         FROM   sys.user_constraints c, cons_cols l
         WHERE  c.constraint_type = 'C'
         AND    c.owner = l.owner AND c.constraint_name = l.constraint_name
@@ -29,9 +29,10 @@ class CheckConstraintBuilder(object):
     PropertyList = odict(
         ('CONSTRAINT_NAME', Property('name')),
         ('DEFER_TYPE',      Property('defer-type')),
-        ('CONDITION',       Property('condition', cdata=True)),
+        ('CONDITION',       Property('condition',  cdata=True)),
         ('TABLE_NAME',      Property('table-name', exclude=True)),
-        ('COLUMN_NAME',     Property('column', exclude=True))
+        ('COLUMN_NAME',     Property('column',     exclude=True)),
+        ('UNNAMED',         Property('unnamed',    exclude=True))
     )
 
     @staticmethod
@@ -39,12 +40,12 @@ class CheckConstraintBuilder(object):
         table = state.tables.get(constraint['table-name'])
         if table:
             # check if it is a column specific unnamed constraint
-            if constraint.column:
+            if constraint.column and constraint.unnamed:
                 column = table.columns.get(constraint.column)
                 match  = COL_NOT_NULL.match(constraint.condition)
                 if match and column.name == match.group(2):
-                    # in case it is deferred, the view incorrect reports
-                    # it as nullable, so need to fix the definition
+                    # in case it is deferred, the view incorrectly reports
+                    # column as nullable, so need to fix it
                     if constraint.get('defer-type'):
                         column['nullable'] = 'false'
                         column['notnull-defer-type'] = constraint['defer-type']
@@ -56,12 +57,18 @@ class CheckConstraintBuilder(object):
                     column['check-defer-type'] = constraint.get('defer-type')
                     return
 
-            # it's not an unnamed column-specific constraint
+            # if it is unnamed, generate a name from the condition
+            if constraint.unnamed:
+                constraint.name = generated_name(constraint.condition)
+
             table.constraints[constraint.name] = constraint
 
     @staticmethod
     def sql(constraint):
-        if not constraint['defer-type']:
-            return "CONSTRAINT %(name)s CHECK ( %(condition)s )" % constraint
+        fmt = "CHECK ( %(condition)s )"
+        if not constraint.name.startswith('generated:'):
+            fmt = "CONSTRAINT %(name)s " + fmt
+        if constraint['defer-type']:
+            fmt = fmt + " DEFERRABLE INITIALLY %(defer-type)s"
 
-        return "CONSTRAINT %(name)s CHECK ( %(condition)s ) DEFERRABLE INITIALLY %(defer-type)s" % constraint
+        return fmt % constraint
