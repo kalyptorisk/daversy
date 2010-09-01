@@ -213,6 +213,12 @@ schema = StringIO("""
       </xsd:extension>
     </xsd:simpleContent>
   </xsd:complexType>
+  <xsd:complexType name="SynonymType">
+    <xsd:attribute name="name" type="NameType" use="required" />
+    <xsd:attribute name="target" type="NameType" use="required" />
+    <xsd:attribute name="schema" type="NameType" />
+    <xsd:attribute name="db-link" type="xsd:string" />
+  </xsd:complexType>
   <!--                    -->
   <!-- the database state -->
   <!--                    -->
@@ -230,6 +236,7 @@ schema = StringIO("""
         <xsd:element name="package" type="SourceType" minOccurs="0" maxOccurs="unbounded" />
         <xsd:element name="trigger" type="TriggerType" minOccurs="0" maxOccurs="unbounded" />
         <xsd:element name="materialized-view" type="MaterializedViewType" minOccurs="0" maxOccurs="unbounded" />
+        <xsd:element name="synonym" type="SynonymType" minOccurs="0" maxOccurs="unbounded" />
       </xsd:sequence>
       <xsd:attribute name="name" type="xsd:normalizedString" use="required" />
     </xsd:complexType>

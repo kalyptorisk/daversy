@@ -16,6 +16,7 @@ from code        import OraclePackage, OraclePackageBuilder
 from code        import OracleObjectType, OracleObjectTypeBuilder
 from code        import OracleMaterializedView, OracleMaterializedViewBuilder
 from trigger     import TriggerBuilder
+from synonym     import OracleSynonym, OracleSynonymBuilder
 
 import state_xsd, connection
 
@@ -35,7 +36,9 @@ class OracleState(DbObject):
                          ('functions',    Function),
                          ('packages',     OraclePackage),
                          ('triggers',     Trigger ),
-                         ('mviews',       OracleMaterializedView) )
+                         ('mviews',       OracleMaterializedView),
+                         ('synonyms',     OracleSynonym)
+                        )
 
 class OracleStateBuilder(OracleBuilder):
     DbClass = OracleState
@@ -71,4 +74,6 @@ class OracleDatabase(Database):
                     StoredProcedureBuilder(),
                     FunctionBuilder(),
                     OraclePackageBuilder(),
-                    TriggerBuilder()              ]
+                    TriggerBuilder(),
+                    OracleSynonymBuilder()
+                   ]

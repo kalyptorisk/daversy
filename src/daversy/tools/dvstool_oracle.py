@@ -791,7 +791,7 @@ DROPCODE_SQL = """
 DECLARE CURSOR object_list IS
       SELECT   object_name, object_type
       FROM     user_objects
-      WHERE    object_type IN ('PACKAGE', 'FUNCTION', 'PROCEDURE', 'TRIGGER', 'VIEW')
+      WHERE    object_type IN ('PACKAGE', 'FUNCTION', 'PROCEDURE', 'TRIGGER', 'VIEW', 'SYNONYM')
       AND      object_name NOT LIKE 'BIN$%';
 BEGIN
    FOR rec IN object_list LOOP
@@ -952,6 +952,8 @@ CODEFILTER_INI = """
 [trigger]
 .*=all
 [type]
+.*=all
+[synonym]
 .*=all
 """
 
