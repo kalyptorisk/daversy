@@ -12,7 +12,8 @@ class OracleSynonymBuilder(object):
 
     Query = """
         SELECT synonym_name, table_name AS target,
-               table_owner AS schema, db_link
+               table_owner AS schema,
+               REGEXP_SUBSTR(db_link, '^[^\.]+') AS db_link
         FROM   sys.user_synonyms
         ORDER BY synonym_name
     """
