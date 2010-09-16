@@ -4,6 +4,7 @@ import subprocess, glob, optparse, cStringIO, tempfile
 
 from daversy.utils                import get_uuid4
 from daversy.db.oracle.connection import DEFAULT_NLS_LANG
+from lxml                         import etree
 
 CMDLINE = 100
 TOOLERR = 101
@@ -733,6 +734,8 @@ class SyncDb(DvsOracleTool):
         os.remove(self.current_state)
         os.rename(self.latest_state, self.current_state)
 
+        self.rewrite_schema()
+
         return 0
 
     def check_migration(self, orig_options):
@@ -765,6 +768,26 @@ class SyncDb(DvsOracleTool):
                           left, right])
         self.write_file(self.change_report, self.output)
 
+    def rewrite_schema(self):
+        objects  = {}
+        document = etree.parse(self.current_state)
+        for node in document.getroot():
+            tag = '}' in node.tag and node.tag[node.tag.index('}')+1:] or node.tag
+            objects.setdefault(tag, [])
+            objects[tag].append(node.get('name').lower())
+        schema   = ConfigParser.ConfigParser()
+        schema.read(self.filter_config)
+
+        config   = open(self.filter_config, 'w')
+        for section in schema.sections():
+            names = [o.lower() for o in schema.options(section)]
+            names.sort()
+            config.write("[%s]\n" % section)
+            for name in names:
+                if not objects.has_key(section) or name in objects[section] or '.' in name:
+                    config.write("%s=%s\n" % (name, schema.get(section, name)))
+            config.write("\n")
+        config.close()
 
 
 MIGRATION_NEEDED = ['foreign-key', 'table', 'index', 'sequence', 'materialized-view']
