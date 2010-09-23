@@ -210,7 +210,7 @@ class ImportDb(DvsOracleTool):
         self.execute_out('restoring  target   schema',
                          ['imp', self.connectString, 'file=' + dump, 'full=y'], env)
 
-        self.execute_ddl('recompiling schema', RECOMPILE_SQL)
+        self.execute_ddl('recompiling schema', RECREATETYPES_SQL, RECOMPILE_SQL)
 
 class CopyDb(DvsOracleTool):
     def __main__(self):
