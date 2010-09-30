@@ -398,7 +398,7 @@ class MigrateDb(DvsOracleTool):
         self.execute_ddl('getting source state version', GETVERSION_SQL)
         match = re.match(r'SCHEMA_VERSION\s+\-+\s+([\w\-]+)\s*', self.output)
         if not match:
-            self.message('CANNOT FIND SCHEMA VERSION')
+            self.message('cannot find schema version')
             print self.output
             self.quit(SQLERR)
         self.source_version = match.group(1)
@@ -412,6 +412,7 @@ class MigrateDb(DvsOracleTool):
 
         #### determine and perform migrations
 
+        self.setup_migrations(migration_dir)
         self.do_migrations(migration_dir)
 
         #### replace existing schema objects which don't need migration
@@ -475,7 +476,7 @@ class MigrateDb(DvsOracleTool):
 
         return return_val
 
-    def do_migrations(self, dir):
+    def setup_migrations(self, dir):
 
         self.migrations = {}
 
@@ -508,6 +509,9 @@ class MigrateDb(DvsOracleTool):
 
         self.bridge         = self.get_bridge_migration(dir)
         self.migration_path = self.find_path(self.start_version)
+
+    def do_migrations(self, dir):
+
         if not self.migration_path:
             self.message('unable to find a migration path')
             for i in range(len(self.broken_paths)):
@@ -663,6 +667,34 @@ class SyncDb(DvsOracleTool):
         self.execute_cmd('getting current version', ['dvs', 'name', self.current_state])
         self.current_version = self.output
         self.next_version    = get_uuid4()
+
+        self.execute_ddl('getting state version from database', GETVERSION_SQL)
+        match = re.match(r'SCHEMA_VERSION\s+\-+\s+([\w\-]+)\s*', self.output)
+        if not match:
+            self.message('cannot find schema version')
+            print self.output
+            self.quit(SQLERR)
+        self.db_version = match.group(1)
+
+        if self.db_version != self.current_version:
+            new_opt              = optparse.Values()
+            new_opt.no_comment   = False
+            new_opt.wrap         = False
+            new_opt.include_tags = options.include_tags
+            new_opt.exclude_tags = options.exclude_tags
+
+            self.migrate = MigrateDb()
+            self.migrate.connectString  = self.connectString
+            self.migrate.target_version = self.current_version
+            self.migrate.source_version = self.db_version
+            self.migrate.start_version  = self.db_version
+            self.migrate.setup_migrations(self.migration_dir)
+
+            if self.migrate.migration_path:
+                self.message('pushing changes to the database (unsaved changes may be lost)')
+                self.message('', None)
+                return self.migrate.run(new_opt, self.current_state,
+                                         self.filter_config, self.migration_dir)
 
         self.execute_cmd('extracting latest database state',
                          ['dvs', 'copy', '-f', self.filter_config,
