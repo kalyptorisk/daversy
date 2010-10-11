@@ -11,7 +11,7 @@ class IndexColumnBuilder(object):
         SELECT c.column_name, lower(c.descend) AS sort, i.index_name,
                i.table_name, c.column_position AS position,
                e.column_expression AS expression
-        FROM   sys.user_indexes i, sys.user_ind_columns c, 
+        FROM   sys.user_indexes i, sys.user_ind_columns c,
                sys.user_ind_expressions e
         WHERE  i.index_name = c.index_name
         AND    i.table_name = c.table_name
@@ -46,15 +46,17 @@ class IndexBuilder(object):
 
     Query = """
         SELECT i.index_name, i.table_name,
-               decode(i.uniqueness, 'UNIQUE', 'true', 'false') AS is_unique
+               decode(i.uniqueness, 'UNIQUE', 'true', 'false') AS is_unique,
+               decode(i.index_type, 'BITMAP', 'true')          AS is_bitmap
         FROM   sys.user_indexes i
-        WHERE  i.index_type IN ('NORMAL', 'FUNCTION-BASED NORMAL')
+        WHERE  i.index_type IN ('NORMAL', 'FUNCTION-BASED NORMAL', 'BITMAP')
         ORDER BY i.index_name
     """
 
     PropertyList = odict(
         ('INDEX_NAME', Property('name')),
         ('IS_UNIQUE',  Property('unique')),
+        ('IS_BITMAP',  Property('bitmap')),
         ('TABLE_NAME', Property('table-name'))
     )
 
@@ -69,7 +71,7 @@ class IndexBuilder(object):
 
     @staticmethod
     def createSQL(index):
-        sql = "CREATE %(unique)s INDEX %(name)s ON %(table-name)s (\n" \
+        sql = "CREATE %(unique)s %(bitmap)s INDEX %(name)s ON %(table-name)s (\n" \
               "  %(column_sql)s\n)\n/\n"
 
         column_def = ["%(name)-30s %(sort)s" % column for column
@@ -77,6 +79,7 @@ class IndexBuilder(object):
         column_sql = ",\n  ".join(column_def)
 
         unique = index.unique == 'true' and 'UNIQUE' or ''
+        bitmap = index.bitmap == 'true' and 'BITMAP' or ''
 
-        return render(sql, index, unique=unique, column_sql=column_sql)
+        return render(sql, index, unique=unique, bitmap=bitmap, column_sql=column_sql)
 

@@ -168,8 +168,7 @@ schema = StringIO("""
     <xsd:attribute name="name" type="NameType" use="required" />
     <xsd:attribute name="table-name" type="NameType" use="required" />
     <xsd:attribute name="unique" type="xsd:boolean" use="required" />
-    <!-- TODO: what do the various index-types mean?
-    <xsd:attribute name="index-type" type="xsd:string" default="normal" /> -->
+    <xsd:attribute name="bitmap" type="xsd:boolean" />
   </xsd:complexType>
   <xsd:complexType name="ForeignKeyType">
       <xsd:sequence>
