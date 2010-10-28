@@ -26,6 +26,7 @@ class TableColumnBuilder(object):
         ('DEFER_TYPE',      Property('notnull-defer-type')),
         ('CHK',             Property('check')),
         ('CHK_DEFER_TYPE',  Property('check-defer-type')),
+        ('CHAR_SEMANTICS',  Property('char-semantics')),
         ('PARENT_NAME',     Property('parent-name', exclude=True)),
         ('COLUMN_ID',       Property('sequence',   exclude=True))
     )
@@ -34,9 +35,10 @@ class TableColumnBuilder(object):
         SELECT tc.column_name, tc.table_name AS parent_name, tc.column_id,
                nvl2(tc.data_type_owner, null, lower(tc.data_type)) AS data_type,
                nvl2(tc.data_type_owner, tc.data_type, null) AS custom_type,
-               nvl(tc.char_col_decl_length, tc.data_length) AS data_length,
+               nvl2(tc.char_used, tc.char_length, tc.data_length) AS data_length,
                tc.data_precision, tc.data_scale, tc.nullable, tc.data_default,
-               c.comments, NULL AS defer_type, NULL AS chk, NULL AS chk_defer_type
+               c.comments, NULL AS defer_type, NULL AS chk, NULL AS chk_defer_type,
+               DECODE(tc.char_used, 'C', 'true') AS char_semantics
         FROM   sys.user_tab_columns tc, sys.user_col_comments c
         WHERE  tc.table_name  = c.table_name
         AND    tc.column_name = c.column_name
@@ -73,7 +75,10 @@ class TableColumnBuilder(object):
         elif column.type in ('varchar2', 'nvarchar2', 'char'):
             if int(column.length) < 1:
                 raise TypeError("%s can't be of zero length." % (type, ))
-            definition += '(%(length)s)'
+            if column['char-semantics'] == 'true':
+                definition += '(%(length)s CHAR)'
+            else:
+                definition += '(%(length)s BYTE)'
 
         result = definition % column
 

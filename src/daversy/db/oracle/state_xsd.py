@@ -107,6 +107,7 @@ schema = StringIO("""
     <xsd:attribute name="check-defer-type" type="DeferTypeEnum" />
     <xsd:attribute name="default-value" type="xsd:string" />
     <xsd:attribute name="comment" type="ContentType" />
+    <xsd:attribute name="char-semantics" type="xsd:boolean" />
   </xsd:complexType>
   <xsd:complexType name="GenericConstraintType">
     <xsd:sequence>
