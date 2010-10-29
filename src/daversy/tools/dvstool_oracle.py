@@ -413,7 +413,9 @@ class MigrateDb(DvsOracleTool):
         #### determine and perform migrations
 
         self.setup_migrations(migration_dir)
-        self.do_migrations(migration_dir)
+        error = self.do_migrations(migration_dir)
+        if error != 0:
+            return error
 
         #### replace existing schema objects which don't need migration
 
@@ -518,7 +520,7 @@ class MigrateDb(DvsOracleTool):
                 self.message('broken path #%d' % (i+1))
                 for version in self.broken_paths[i]:
                     self.message(version, '      ')
-            self.quit(MIGERR)
+            return MIGERR
 
         ### if bridge present, modify the migrations
         if self.bridge:
@@ -547,6 +549,8 @@ class MigrateDb(DvsOracleTool):
         if self.bridge:
             guid, desc = self.bridge.get('bridge', 'guid'), self.bridge.get('bridge', 'desc')
             self.execute_sql('bridge successful: [%s]' % desc, UPDATESCHEMA_SQL % (guid, desc))
+
+        return 0
 
     def find_path(self, source):
         queue = [ (source, [source]) ]
