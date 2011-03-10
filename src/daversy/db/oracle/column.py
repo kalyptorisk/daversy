@@ -72,13 +72,17 @@ class TableColumnBuilder(object):
                 definition += '(%(precision)s)'
             elif column.precision and column.scale:
                 definition += '(%(precision)s, %(scale)s)'
-        elif column.type in ('varchar2', 'nvarchar2', 'char'):
+        elif column.type in ('varchar2', 'char'):
             if int(column.length) < 1:
                 raise TypeError("%s can't be of zero length." % (type, ))
             if column['char-semantics'] == 'true':
                 definition += '(%(length)s CHAR)'
             else:
                 definition += '(%(length)s BYTE)'
+        elif column.type in ('nvarchar2', 'nchar'):
+            if int(column.length) < 1:
+                raise TypeError("%s can't be of zero length." % (type, ))
+            definition += '(%(length)s)'
 
         result = definition % column
 
