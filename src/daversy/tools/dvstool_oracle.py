@@ -68,7 +68,8 @@ class DvsOracleTool(object):
         return result
 
     def check_commands(self):
-        if self.execute(['sqlplus', '/?']) != 0:
+        self.execute(['sqlplus', '/?'])
+        if not self.output or 'SQL*Plus' not in self.output:
             self.message('Unable to execute SQL*Plus, please check that Oracle is in the PATH.')
             self.quit(TOOLERR)
 
