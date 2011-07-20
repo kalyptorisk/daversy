@@ -285,12 +285,12 @@ class WrapDb(DvsOracleTool):
         for source, objtype, name in encoded_data:
             name = name.upper()
             if objtype in ['TYPE', 'PROCEDURE', 'FUNCTION']:
-                state[objtype.lower()+'s'][name].source = source.strip() + ';\n/'
+                state[objtype.lower()+'s'][name].source = source.strip() + '\n\n/'
 
             if objtype == 'PACKAGE':
-                pkg[name] = source.strip() + ';\n/\n'
+                pkg[name] = source.strip() + '\n\n/\n'
             elif objtype == 'PACKAGE BODY':
-                state.packages[name].source = pkg[name] + source.strip() + ';\n/'
+                state.packages[name].source = pkg[name] + source.strip() + '\n\n/'
                 del pkg[name]
 
         # packages without body
