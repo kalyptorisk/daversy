@@ -300,6 +300,44 @@ class WrapDb(DvsOracleTool):
         self.message('saving updated state')
         provider.save(state, target, None)
 
+class UnwrapDb(DvsOracleTool):
+    def __main__(self):
+        parser = optparse.OptionParser(usage='%prog unwrap SOURCE-STATE TARGET-DB')
+        (options, args) = parser.parse_args(sys.argv[2:])
+
+        if not len(args) == 2:
+            parser.print_help()
+            self.quit(CMDLINE)
+
+        state, self.connectString = args
+
+        self.check_commands()
+        self.run(state)
+
+    def run(self, state):
+        ddl    = self.tempfile(ext='.sql')
+        filter = self.tempfile(CODEFILTER_INI, ext='.ini')
+
+        #### replace encrypted code
+
+        self.execute_cmd('generating updated objects',
+                         ['dvs', 'generate', '-f', filter, '-s', 'create', state, ddl])
+
+        self.execute_ddl('dropping existing objects', DROPCODE_SQL, DROPTYPES_SQL)
+        self.execute_ddl('creating updated objects', EXECSCRIPT_SQL % ddl)
+
+        #### replace existing comments
+
+        self.execute_cmd('generating updated comments',
+                         ['dvs', 'generate', '-s', 'comment', state, ddl])
+
+        self.execute_ddl('applying updated comments', EXECSCRIPT_SQL % ddl)
+
+        #### recompile schema
+
+        self.execute_ddl('recompiling schema', RECOMPILE_SQL)
+
+
 class CreateDb(DvsOracleTool):
     def __main__(self):
         parser = optparse.OptionParser(usage='%prog create [options] CONNECT-STRING STATE')
@@ -1020,9 +1058,8 @@ CODEFILTER_INI = """
 MIGRATION_REGEX = re.compile(r'/\*\*\*\s+Source-Version:\s+([\w\-]+)\s+Target-Version:\s+([\w\-]+)\s+Description:\s+(.+?)\s+\*\*\*\/')
 WRAPCODE_REGEX  = re.compile(r'(CREATE OR REPLACE (TYPE|FUNCTION|PROCEDURE|PACKAGE|PACKAGE BODY|) \"?(\w+?)\"? wrapped.+?)(?=\s+\/\s+)', re.S)
 
-TOOLS = { 'sync'   : SyncDb,   'migrate' : MigrateDb, 'create' : CreateDb,
-          'diff'   : DiffDb,   'clean'   : CleanDb,   'wrap'   : WrapDb,
-          'import' : ImportDb, 'export'  : ExportDb,  'copy'   : CopyDb,  }
+TOOLS = { 'sync' : SyncDb, 'migrate' : MigrateDb, 'create' : CreateDb, 'diff' : DiffDb, 'clean'  : CleanDb,
+          'wrap' : WrapDb, 'import'  : ImportDb,  'export' : ExportDb, 'copy' : CopyDb, 'unwrap' : UnwrapDb }
 
 def main():
     if len(sys.argv) == 1 or sys.argv[1] not in TOOLS.keys():
