@@ -14,7 +14,7 @@ class TableBuilder(object):
     XmlTag  = 'table'
 
     Query = """
-        SELECT t.table_name, t.temporary, c.comments,
+        SELECT t.table_name, t.temporary, NVL2(t.iot_type, 'Y', 'N') AS iot, c.comments,
                decode(t.duration,
                       'SYS$SESSION',     'true',
                       'SYS$TRANSACTION', 'false') AS preserve
@@ -25,6 +25,7 @@ class TableBuilder(object):
     """
     PropertyList = odict(
         ('TABLE_NAME',  Property('name')),
+        ('IOT',         Property('iot',       'false', lambda flag: YESNO_MAPPING[flag])),
         ('TEMPORARY',   Property('temporary', 'false', lambda flag: YESNO_MAPPING[flag])),
         ('COMMENTS',    Property('comment')),
         ('PRESERVE',    Property('on-commit-preserve-rows'))
@@ -57,6 +58,12 @@ class TableBuilder(object):
             t2 = 'ON COMMIT PRESERVE ROWS\n'
           else:
             t2 = 'ON COMMIT DELETE ROWS\n'
+        elif table.iot == 'true':
+          t2 = 'ORGANIZATION INDEX'
+          pk = table.primary_keys.values()[0]
+          if pk.compress:
+            t2 += ' COMPRESS '+pk.compress
+          t2 += '\n'
 
         return render(sql, table, temp1=t1, temp2=t2, table_sql=table_sql)
 

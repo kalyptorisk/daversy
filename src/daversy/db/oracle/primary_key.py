@@ -37,9 +37,11 @@ class PrimaryKeyBuilder(object):
     XmlTag  = 'primary-key'
 
     Query = """
-        SELECT c.constraint_name AS name, c.table_name, 
-               DECODE(c.deferrable, 'DEFERRABLE', lower(c.deferred)) AS defer_type
+        SELECT c.constraint_name AS name, c.table_name,
+               DECODE(c.deferrable, 'DEFERRABLE', lower(c.deferred)) AS defer_type,
+               DECODE(i.compression, 'ENABLED', i.prefix_length) AS "COMPRESS"
         FROM   sys.user_constraints c
+        LEFT JOIN sys.user_indexes i ON c.index_name = i.index_name AND i.index_type = 'IOT - TOP'
         WHERE  c.constraint_type = 'P'
         ORDER BY c.constraint_name
     """
@@ -47,6 +49,7 @@ class PrimaryKeyBuilder(object):
     PropertyList = odict(
         ('NAME',       Property('name')),
         ('DEFER_TYPE', Property('defer-type')),
+        ('COMPRESS',   Property('compress')),
         ('TABLE_NAME', Property('table-name', exclude=True))
     )
 

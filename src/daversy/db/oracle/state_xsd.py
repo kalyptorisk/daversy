@@ -109,6 +109,14 @@ schema = StringIO("""
     <xsd:attribute name="comment" type="ContentType" />
     <xsd:attribute name="char-semantics" type="xsd:boolean" />
   </xsd:complexType>
+  <xsd:complexType name="PrimaryConstraintType">
+    <xsd:sequence>
+      <xsd:element name="constraint-column" type="ConstraintColumnType" minOccurs="1" maxOccurs="unbounded" />
+    </xsd:sequence>
+    <xsd:attribute name="name" type="NameType" />
+    <xsd:attribute name="defer-type" type="DeferTypeEnum" />
+    <xsd:attribute name="compress" type="xsd:positiveInteger" />
+  </xsd:complexType>
   <xsd:complexType name="GenericConstraintType">
     <xsd:sequence>
       <xsd:element name="constraint-column" type="ConstraintColumnType" minOccurs="1" maxOccurs="unbounded" />
@@ -144,12 +152,13 @@ schema = StringIO("""
   <xsd:complexType name="TableType">
     <xsd:sequence>
       <xsd:element name="column" type="ColumnType" minOccurs="1" maxOccurs="unbounded" />
-      <xsd:element name="primary-key" type="GenericConstraintType" minOccurs="0" maxOccurs="1" />
+      <xsd:element name="primary-key" type="PrimaryConstraintType" minOccurs="0" maxOccurs="1" />
       <xsd:element name="unique-key" type="GenericConstraintType" minOccurs="0" maxOccurs="unbounded" />
       <xsd:element name="check-constraint" type="CheckConstraintType" minOccurs="0" maxOccurs="unbounded" />
     </xsd:sequence>
     <xsd:attribute name="name" type="NameType" use="required" />
     <xsd:attribute name="temporary" type="xsd:boolean" />
+    <xsd:attribute name="iot" type="xsd:boolean" />
     <xsd:attribute name="on-commit-preserve-rows" type="xsd:boolean" />
     <xsd:attribute name="comment" type="ContentType" />
   </xsd:complexType>
