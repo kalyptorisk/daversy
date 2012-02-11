@@ -223,6 +223,8 @@ class CopyDb(DvsOracleTool):
             self.quit(CMDLINE)
 
         source, target = args
+        if source == target:
+            parser.error('SOURCE-DB cannot be the same as TARGET-DB')
 
         self.check_commands()
         self.run(source, target)
