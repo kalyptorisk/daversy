@@ -69,10 +69,15 @@ class TableBuilder(object):
 
     @staticmethod
     def commentSQL(table):
-        comments = []
-        comments.append("COMMENT ON TABLE %s IS '%s';" % (table.name,
-                                                            sql_escape(table.comment)))
+        template = "COMMENT ON TABLE %(name)s IS '%(comment)s';"
+        result = []
+        if table.comment:
+            result.append(render(template, table, 
+                                 comment = sql_escape(table.comment)))
+        
         for column in table.columns.values():
-            comments.append(TableColumnBuilder.commentSQL(table, column))
+            col_comment = TableColumnBuilder.commentSQL(table, column)
+            if col_comment:
+                result.append(col_comment)
 
-        return comments
+        return result

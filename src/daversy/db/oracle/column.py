@@ -103,6 +103,8 @@ class TableColumnBuilder(object):
 
     @staticmethod
     def commentSQL(parent, col):
+        if not col.comment:
+            return None
         return "COMMENT ON COLUMN %s.%s IS '%s';" % (parent.name, col.name,
                                                        sql_escape(col.comment))
 
@@ -139,6 +141,8 @@ class ViewColumnBuilder(object):
 
     @staticmethod
     def commentSQL(parent, col):
+        if not col.comment:
+            return None
         return "COMMENT ON COLUMN %s.%s IS '%s';" % (parent.name, col.name,
                                                        sql_escape(col.comment))
 

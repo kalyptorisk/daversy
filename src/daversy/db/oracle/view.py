@@ -41,10 +41,13 @@ class ViewBuilder(object):
     def commentSQL(view):
         template = "COMMENT ON TABLE %(name)s IS '%(comment)s';"
         result = []
-        result.append( render(template, view,
-                              comment = sql_escape(view.comment)) )
+        if view.comment:
+            result.append(render(template, view,
+                                 comment = sql_escape(view.comment)))
 
         for column in view.columns.values():
-            result.append( ViewColumnBuilder.commentSQL(view, column) )
+            col_comment = ViewColumnBuilder.commentSQL(view, column)
+            if col_comment:
+                result.append(col_comment)
 
         return result
