@@ -325,7 +325,7 @@ class UnwrapDb(DvsOracleTool):
         self.execute_cmd('generating updated objects',
                          ['dvs', 'generate', '-f', filter, '-s', 'create', state, ddl])
 
-        self.execute_ddl('dropping existing objects', DROPCODE_SQL, DROPTYPES_SQL)
+        self.execute_ddl('dropping existing objects', DROPCODE_SQL, DROPTYPES_SQL, DROPCOMMENT_SQL)
         self.execute_ddl('creating updated objects', EXECSCRIPT_SQL % ddl)
 
         #### replace existing comments
@@ -473,7 +473,7 @@ class MigrateDb(DvsOracleTool):
             os.remove(ddl)
             os.rename(ddl+'.enc', ddl)
 
-        self.execute_ddl('dropping existing objects', DROPCODE_SQL, DROPTYPES_SQL)
+        self.execute_ddl('dropping existing objects', DROPCODE_SQL, DROPTYPES_SQL, DROPCOMMENT_SQL)
         self.execute_ddl('creating updated objects', EXECSCRIPT_SQL % ddl)
         self.execute_ddl('recompiling schema', RECOMPILE_SQL)
 
@@ -937,6 +937,15 @@ BEGIN
    FOR rec IN object_list LOOP
       EXECUTE IMMEDIATE ' DROP SEQUENCE "' || rec.object_name || '"';
    END LOOP;
+END;
+/
+"""
+
+DROPCOMMENT_SQL = """
+BEGIN
+    FOR rec IN (SELECT table_name, column_name FROM user_col_comments WHERE comments IS NOT NULL) LOOP
+        EXECUTE IMMEDIATE 'COMMENT ON COLUMN '||rec.table_name||'.'||rec.column_name||' IS ''''';
+    END LOOP;
 END;
 /
 """
