@@ -12,7 +12,6 @@ class UniqueKeyColumnBuilder(object):
         FROM   sys.user_constraints c, sys.user_cons_columns cols
         WHERE  c.constraint_name = cols.constraint_name
         AND    c.constraint_type = 'U'
-        AND    c.constraint_name NOT LIKE '%$%'
         ORDER BY c.constraint_name, cols.position
     """
 
@@ -39,16 +38,18 @@ class UniqueKeyBuilder(object):
 
     Query = """
         SELECT c.constraint_name AS name, c.table_name,
-               DECODE(c.deferrable, 'DEFERRABLE', lower(c.deferred)) AS defer_type
+               DECODE(c.deferrable, 'DEFERRABLE', lower(c.deferred)) AS defer_type,
+               DECODE(i.compression, 'ENABLED', i.prefix_length) AS "COMPRESS"
         FROM   sys.user_constraints c
+        LEFT JOIN sys.user_indexes i ON c.index_name = i.index_name
         WHERE  c.constraint_type = 'U'
-        AND    c.constraint_name NOT LIKE '%$%'
         ORDER BY c.constraint_name
     """
 
     PropertyList = odict(
         ('NAME',       Property('name')),
         ('DEFER_TYPE', Property('defer-type')),
+        ('COMPRESS',   Property('compress')),
         ('TABLE_NAME', Property('table-name', exclude=True))
     )
 

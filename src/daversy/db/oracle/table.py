@@ -53,17 +53,24 @@ class TableBuilder(object):
         table_sql = ",\n  ".join(definition)
         t1, t2 = '', ''
         if table.temporary == 'true':
-          t1 = 'GLOBAL TEMPORARY '
-          if table.get('on-commit-preserve-rows') == 'true':
-            t2 = 'ON COMMIT PRESERVE ROWS\n'
-          else:
-            t2 = 'ON COMMIT DELETE ROWS\n'
+            t1 = 'GLOBAL TEMPORARY '
+            if table.get('on-commit-preserve-rows') == 'true':
+                t2 = 'ON COMMIT PRESERVE ROWS\n'
+            else:
+                t2 = 'ON COMMIT DELETE ROWS\n'
         elif table.iot == 'true':
-          t2 = 'ORGANIZATION INDEX'
-          pk = table.primary_keys.values()[0]
-          if pk.compress:
-            t2 += ' COMPRESS '+pk.compress
-          t2 += '\n'
+            t2 = 'ORGANIZATION INDEX'
+            pk = table.primary_keys.values()[0]
+            if pk.compress:
+                t2 += ' COMPRESS '+pk.compress
+            t2 += '\n'
+        else:
+            for key in table.primary_keys.values():
+                if key.compress:
+                    t2 += '/\nALTER INDEX %(name)s REBUILD COMPRESS %(compress)s\n' % key
+            for key in table.unique_keys.values():
+                if key.compress:
+                    t2 += '/\nALTER INDEX %(name)s REBUILD COMPRESS %(compress)s\n' % key
 
         return render(sql, table, temp1=t1, temp2=t2, table_sql=table_sql)
 

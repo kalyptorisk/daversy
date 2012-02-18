@@ -47,7 +47,8 @@ class IndexBuilder(object):
     Query = """
         SELECT i.index_name, i.table_name,
                decode(i.uniqueness, 'UNIQUE', 'true', 'false') AS is_unique,
-               decode(i.index_type, 'BITMAP', 'true')          AS is_bitmap
+               decode(i.index_type, 'BITMAP', 'true')          AS is_bitmap,
+               DECODE(i.compression, 'ENABLED', i.prefix_length) AS "COMPRESS"
         FROM   sys.user_indexes i
         WHERE  i.index_type IN ('NORMAL', 'FUNCTION-BASED NORMAL', 'BITMAP')
         ORDER BY i.index_name
@@ -57,7 +58,8 @@ class IndexBuilder(object):
         ('INDEX_NAME', Property('name')),
         ('IS_UNIQUE',  Property('unique')),
         ('IS_BITMAP',  Property('bitmap')),
-        ('TABLE_NAME', Property('table-name'))
+        ('TABLE_NAME', Property('table-name')),
+        ('COMPRESS',   Property('compress'))
     )
 
     @staticmethod
@@ -72,7 +74,7 @@ class IndexBuilder(object):
     @staticmethod
     def createSQL(index):
         sql = "CREATE %(unique)s %(bitmap)s INDEX %(name)s ON %(table-name)s (\n" \
-              "  %(column_sql)s\n)\n/\n"
+              "  %(column_sql)s\n)%(suffix)s\n/\n"
 
         column_def = ["%(name)-30s %(sort)s" % column for column
                                                       in index.columns.values()]
@@ -80,6 +82,10 @@ class IndexBuilder(object):
 
         unique = index.unique == 'true' and 'UNIQUE' or ''
         bitmap = index.bitmap == 'true' and 'BITMAP' or ''
+        suffix = ''
+        if index.compress:
+            suffix = ' COMPRESS '+index.compress
 
-        return render(sql, index, unique=unique, bitmap=bitmap, column_sql=column_sql)
+        return render(sql, index, unique=unique, bitmap=bitmap, 
+                       suffix=suffix, column_sql=column_sql)
 

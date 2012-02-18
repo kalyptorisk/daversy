@@ -41,7 +41,7 @@ class PrimaryKeyBuilder(object):
                DECODE(c.deferrable, 'DEFERRABLE', lower(c.deferred)) AS defer_type,
                DECODE(i.compression, 'ENABLED', i.prefix_length) AS "COMPRESS"
         FROM   sys.user_constraints c
-        LEFT JOIN sys.user_indexes i ON c.index_name = i.index_name AND i.index_type = 'IOT - TOP'
+        LEFT JOIN sys.user_indexes i ON c.index_name = i.index_name
         WHERE  c.constraint_type = 'P'
         ORDER BY c.constraint_name
     """
