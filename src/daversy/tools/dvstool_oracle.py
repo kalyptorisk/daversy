@@ -834,6 +834,7 @@ class SyncDb(DvsOracleTool):
         self.message('', None)
         self.migrate = MigrateDb()
         self.migrate.connectString = self.tempConnectString
+        self.migrate.migration_check = self.current_state
         result = self.migrate.run(options, self.latest_state,
                                   None, self.migration_dir)
 
