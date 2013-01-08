@@ -31,7 +31,9 @@ class IndexColumnBuilder(object):
 
     @staticmethod
     def addToState(state, column):
-        if column.expression:      # function-based columns have no name
+        table = state.tables.get(column['table-name'])
+        real  = table and table.columns.get(column.name)
+        if column.expression and not real:      # function-based columns have no name
           column.name = column.expression
 
         index = state.indexes.get(column['index-name'])
