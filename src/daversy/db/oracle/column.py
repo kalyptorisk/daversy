@@ -27,6 +27,7 @@ class TableColumnBuilder(object):
         ('CHK',             Property('check')),
         ('CHK_DEFER_TYPE',  Property('check-defer-type')),
         ('CHAR_SEMANTICS',  Property('char-semantics')),
+        ('VIRTUAL_COL',     Property('virtual')),
         ('PARENT_NAME',     Property('parent-name', exclude=True)),
         ('COLUMN_ID',       Property('sequence',   exclude=True))
     )
@@ -38,8 +39,9 @@ class TableColumnBuilder(object):
                nvl2(tc.char_used, tc.char_length, tc.data_length) AS data_length,
                tc.data_precision, tc.data_scale, tc.nullable, tc.data_default,
                c.comments, NULL AS defer_type, NULL AS chk, NULL AS chk_defer_type,
-               DECODE(tc.char_used, 'C', 'true') AS char_semantics
-        FROM   sys.user_tab_columns tc, sys.user_col_comments c
+               DECODE(tc.char_used, 'C', 'true') AS char_semantics,
+               DECODE(tc.virtual_column, 'YES', 'true') AS virtual_col
+        FROM   sys.user_tab_cols tc, sys.user_col_comments c
         WHERE  tc.table_name  = c.table_name
         AND    tc.column_name = c.column_name
         AND    tc.data_type_owner IS NULL
@@ -60,7 +62,10 @@ class TableColumnBuilder(object):
     @staticmethod
     def sql(column):
         if column['custom-type']:
-          return "%(name)-30s %(custom-type)s" % column
+            return "%(name)-30s %(custom-type)s" % column
+
+        if column['virtual']:
+            return "%(name)-30s GENERATED ALWAYS AS (%(default-value)s)" % column
 
         definition = "%(name)-30s %(type)s"
 
