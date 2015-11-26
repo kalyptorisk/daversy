@@ -194,6 +194,7 @@ schema = StringIO("""
         <xsd:attribute name="refresh-mode" type="xsd:string" />
         <xsd:attribute name="refresh-method" type="xsd:string" />
         <xsd:attribute name="build-mode" type="xsd:string" />
+        <xsd:attribute name="query-rewrite" type="xsd:string" />
         <xsd:attribute name="source" type="ContentType" />
       </xsd:extension>
     </xsd:simpleContent>

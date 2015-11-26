@@ -197,6 +197,7 @@ class OracleMaterializedViewBuilder(object):
                lower(refresh_mode) AS refresh_mode,
                lower(refresh_method) AS refresh_method,
                lower(build_mode) AS build_mode,
+               decode(rewrite_enabled, 'Y', 'enable', 'disable') AS query_rewrite,
                query AS source
         FROM   sys.user_mviews
         WHERE  mview_name NOT LIKE '%$%'
@@ -208,6 +209,7 @@ class OracleMaterializedViewBuilder(object):
         ('REFRESH_MODE',   Property('refresh-mode')),
         ('REFRESH_METHOD', Property('refresh-method')),
         ('BUILD_MODE',     Property('build-mode')),
+        ('QUERY_REWRITE',  Property('query-rewrite')),
         ('SOURCE',         Property('source', cdata=True))
     )
 
@@ -218,5 +220,5 @@ class OracleMaterializedViewBuilder(object):
 
     @staticmethod
     def createSQL(mview):
-        definition =  "CREATE MATERIALIZED VIEW %(name)s BUILD %(build-mode)s REFRESH %(refresh-method)s ON %(refresh-mode)s AS\n%(source)s\n/\n"
+        definition =  "CREATE MATERIALIZED VIEW %(name)s BUILD %(build-mode)s REFRESH %(refresh-method)s ON %(refresh-mode)s %(query-rewrite)s QUERY REWRITE AS\n%(source)s\n/\n"
         return definition % mview
