@@ -624,7 +624,7 @@ class MigrateDb(DvsOracleTool):
 
     def get_bridge_migration(self, dir):
         for name in glob.glob(dir + '/*.ini'):
-            if name.endswith('migration.ini'):
+            if os.path.basename(name) == 'migration.ini':
                 continue
             bridge = ConfigParser.ConfigParser()
             bridge.read(name)
