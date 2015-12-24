@@ -283,10 +283,10 @@ class WrapDb(DvsOracleTool):
         provider = FileState()
         state = provider.load(source)
 
-        pkg = {}
+        pkg, typ = {}, {}
         for source, objtype, name in encoded_data:
-            name = name.upper()
-            if objtype in ['TYPE', 'PROCEDURE', 'FUNCTION']:
+            name, objtype = name.upper(), objtype.upper()
+            if objtype in ['PROCEDURE', 'FUNCTION']:
                 state[objtype.lower()+'s'][name].source = source.strip() + '\n\n/'
 
             if objtype == 'PACKAGE':
@@ -295,9 +295,19 @@ class WrapDb(DvsOracleTool):
                 state.packages[name].source = pkg[name] + source.strip() + '\n\n/'
                 del pkg[name]
 
+            if objtype == 'TYPE':
+                typ[name] = source.strip() + '\n\n/\n'
+            elif objtype == 'TYPE BODY':
+                state.types[name].source = typ[name] + source.strip() + '\n\n/'
+                del typ[name]
+
         # packages without body
         for name in pkg:
             state.packages[name].source = pkg[name].rstrip()
+
+        # types without body
+        for name in typ:
+            state.types[name].source = typ[name].rstrip()
 
         self.message('saving updated state')
         provider.save(state, target, None)
@@ -1068,7 +1078,7 @@ CODEFILTER_INI = """
 """
 
 MIGRATION_REGEX = re.compile(r'/\*\*\*\s+Source-Version:\s+([\w\-]+)\s+Target-Version:\s+([\w\-]+)\s+Description:\s+(.+?)\s+\*\*\*\/')
-WRAPCODE_REGEX  = re.compile(r'(CREATE\s+OR\s+REPLACE\s+(TYPE|FUNCTION|PROCEDURE|PACKAGE|PACKAGE\s+BODY)\s+\"?(\w+?)\"? wrapped.+?)(?=\s+\/\s+)', re.S)
+WRAPCODE_REGEX  = re.compile(r'(CREATE\s+OR\s+REPLACE\s+(TYPE|TYPE\s+BODY|FUNCTION|PROCEDURE|PACKAGE|PACKAGE\s+BODY)\s+\"?(\w+?)\"? wrapped.+?)(?=\s+\/\s+)', re.S)
 
 TOOLS = { 'sync' : SyncDb, 'migrate' : MigrateDb, 'create' : CreateDb, 'diff' : DiffDb, 'clean'  : CleanDb,
           'wrap' : WrapDb, 'import'  : ImportDb,  'export' : ExportDb, 'copy' : CopyDb, 'unwrap' : UnwrapDb }
