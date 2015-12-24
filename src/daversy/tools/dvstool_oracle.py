@@ -1078,7 +1078,7 @@ CODEFILTER_INI = """
 """
 
 MIGRATION_REGEX = re.compile(r'/\*\*\*\s+Source-Version:\s+([\w\-]+)\s+Target-Version:\s+([\w\-]+)\s+Description:\s+(.+?)\s+\*\*\*\/')
-WRAPCODE_REGEX  = re.compile(r'(CREATE\s+OR\s+REPLACE\s+(TYPE|TYPE\s+BODY|FUNCTION|PROCEDURE|PACKAGE|PACKAGE\s+BODY)\s+\"?(\w+?)\"? wrapped.+?)(?=\s+\/\s+)', re.S)
+WRAPCODE_REGEX  = re.compile(r'(CREATE\s+OR\s+REPLACE\s+(TYPE|TYPE\s+BODY|FUNCTION|PROCEDURE|PACKAGE|PACKAGE\s+BODY)\s+\"?(\w+?)\"? wrapped.+?)(?=\s+\/\s+)', re.S|re.I)
 
 TOOLS = { 'sync' : SyncDb, 'migrate' : MigrateDb, 'create' : CreateDb, 'diff' : DiffDb, 'clean'  : CleanDb,
           'wrap' : WrapDb, 'import'  : ImportDb,  'export' : ExportDb, 'copy' : CopyDb, 'unwrap' : UnwrapDb }
