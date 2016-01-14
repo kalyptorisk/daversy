@@ -1,6 +1,4 @@
-# bootstrap setuptools
-import sys, ez_setup
-ez_setup.use_setuptools()
+import sys
 from setuptools import setup, find_packages
 
 # py2exe support
