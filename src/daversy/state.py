@@ -1,7 +1,6 @@
 import os, sys, re, tempfile, ConfigParser
 from os   import path
 from lxml import etree, _elementpath
-import providers
 from daversy.db import Database
 
 #############################################################################
@@ -217,54 +216,9 @@ class DatabaseState(object):
 
         cursor.close()
 
-class VersionControlState(object):
-    def can_load(self, location):
-        provider, params = self._detect_provider(location)
-        return provider and provider.available()
-
-    def can_save(self, location):
-        return self.can_load(location)
-
-    def _detect_provider(self, location):
-        keys = location.split(':')
-        if len(keys) < 2:
-            return None, None
-
-        return providers.VERSIONCONTROL.get(keys[0]), keys[1:]
-
-    def load(self, location, filters = {}):
-        if not self.can_load(location):
-            return None
-
-        provider, params = self._detect_provider(location)
-        data = provider.load_file(params, None)
-        if not data:
-            return None
-        return FileState().load(data, filters)
-
-    def save(self, state, location, info):
-        if not self.can_save(location):
-            return None
-
-        provider, params = self._detect_provider(location)
-        handle, temp_location = tempfile.mkstemp()
-        os.close(handle)
-        FileState().save(state, temp_location, info)
-        provider.save_file(params, temp_location, info)
-
-    def save_sql(self, state, location, info, type):
-        if not self.can_save(location):
-            return None
-
-        provider, params = self._detect_provider(location)
-        handle, temp_location = tempfile.mkstemp()
-        os.close(handle)
-        FileState().save_sql(state, temp_location, info, type)
-        provider.save_file(params, temp_location, info)
-
 #############################################################################
 
-PROVIDERS = [ FileState(), DatabaseState(), VersionControlState() ]
+PROVIDERS = [ FileState(), DatabaseState() ]
 
 #############################################################################
 
