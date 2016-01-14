@@ -1,32 +1,19 @@
-import sys
-from setuptools import setup, find_packages
-
-# py2exe support
-PY2EXE_PACKAGES = ['daversy.command', 'daversy.db', 'daversy.db.oracle', 'gzip', 'decimal']
-PY2EXE_SCRIPTS  = ['src/daversy/dvs.py', 'src/daversy/tools/dvstool_oracle.py']
-
-try:
-    import py2exe
-    py2exe_opts = { 'console' : PY2EXE_SCRIPTS,
-                    'options' : { 'py2exe': { 'dll_excludes': 'oci.dll',
-                                              'packages':  PY2EXE_PACKAGES } }
-    }
-except ImportError:
-    py2exe_opts = {}
+import sys, setuptools
 
 # get the version
 sys.path.append('src')
 import daversy
 
-# setup configuration
-setup(
-    name = 'daversy',
-    version = daversy.VERSION,
-    author = 'Ashish Kulkarni',
-    author_email = 'ashish.kulkarni@kalyptorisk.com',
-    description = 'Daversy is a source control tool for relational databases.',
-    license = 'GPL',
-    classifiers = [
+METADATA = {
+    'name'        : 'daversy',
+    'version'     : daversy.VERSION,
+    'author'      : 'Ashish Kulkarni',
+    'author_email': 'ashish.kulkarni@kalyptorisk.com',
+    'url'         : 'https://github.com/kalyptorisk/daversy',
+    'description' : 'Daversy is a source control tool for relational databases.',
+    'package_dir' : {'': 'src'},
+    'license'     : 'GPLv2+',
+    'classifiers' : [
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
@@ -36,19 +23,20 @@ setup(
         'Topic :: Database',
         'Topic :: Software Development :: Version Control',
         'Topic :: Utilities'
-    ],
+    ]
+}
 
-    install_requires = ['cx_Oracle >= 4.2', 'lxml >= 1.0.3'],
-
-    package_dir = {'': 'src'},
-    packages = find_packages('src', exclude=['ez_setup']),
-
-    entry_points = {
+SETUPTOOLS = METADATA.copy()
+SETUPTOOLS.update({
+    'packages'        : setuptools.find_packages('src'),
+    'install_requires': ['cx_Oracle >= 5.0', 'lxml >= 3.4.0'],
+    'entry_points'    : {
         'console_scripts': [
             'dvs = daversy.dvs:main',
             'dvstool_oracle = daversy.tools.dvstool_oracle:main'
         ]
-    },
+    }
+})
 
-    **py2exe_opts
-)
+if __name__ == '__main__':
+    setuptools.setup(**SETUPTOOLS)

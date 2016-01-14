@@ -1,0 +1,21 @@
+INSTALLATION ON WINDOWS
+-----------------------
+
+1. Install the latest Python 2.7 from
+        https://www.python.org/downloads/windows/
+
+2. Install the latest version of the required modules from the URLs
+   mentioned below. If you have installed 32-bit Python, use the
+   Windows installers for Python 2.7 having "win32" in the name
+   else use the installers with "win-amd64" in the name.
+
+        https://pypi.python.org/pypi/lxml
+        https://pypi.python.org/pypi/cx_Freeze
+        https://pypi.python.org/pypi/cx_Oracle
+
+NOTE: for cx_Oracle, the 11g versions are preferred as they will be
+      compatible with 12c as well.
+
+3. Start a command prompt and run "freeze.py bdist_msi"
+
+4. Install the MSI produced in the "dist/" folder
