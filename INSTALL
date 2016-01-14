@@ -16,6 +16,12 @@ INSTALLATION ON WINDOWS
 NOTE: for cx_Oracle, the 11g versions are preferred as they will be
       compatible with 12c as well.
 
+WARNING: until PR #86 is merged in cx_Freeze and available in the
+         release available from PyPI, you may need to manually apply
+         the changes in your Python installation to ensure that the
+         MSI installers are properly generated: see
+         https://bitbucket.org/anthony_tuininga/cx_freeze/pull-requests/86/
+
 3. Start a command prompt and run "freeze.py bdist_msi"
 
 4. Install the MSI produced in the "dist/" folder
