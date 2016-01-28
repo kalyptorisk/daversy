@@ -459,7 +459,7 @@ class MigrateDb(DvsOracleTool):
             self.message('no migration needed')
             return 0
 
-        self.message('%s => %s' % (self.source_version, self.target_version))
+        self.execute_ddl('%s => %s' % (self.source_version, self.target_version), STOREGRANTS_SQL)
 
         #### determine and perform migrations
 
@@ -497,7 +497,7 @@ class MigrateDb(DvsOracleTool):
 
         #### check for successful migration
 
-        self.execute_ddl('recompiling schema', RECOMPILE_SQL)
+        self.execute_ddl('recompiling schema', RECOMPILE_SQL, APPLYGRANTS_SQL)
 
         self.migration_check = self.tempfile(ext='.state')
 
@@ -1038,6 +1038,47 @@ BEGIN
     END LOOP;
 
     dbms_utility.compile_schema(user);
+END;
+/
+"""
+
+STOREGRANTS_SQL = """
+DECLARE
+    cnt PLS_INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO cnt FROM user_tables WHERE table_name = 'DAVERSY$$TMP_GRANTS';
+    IF cnt = 0 THEN
+        EXECUTE IMMEDIATE '
+            CREATE TABLE daversy$$tmp_grants AS
+            SELECT table_name, grantee, privilege, grantable FROM sys.user_tab_privs
+            WHERE owner = grantor AND owner = USER';
+    END IF;
+END;
+/
+"""
+
+APPLYGRANTS_SQL = """
+DECLARE
+    cnt PLS_INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO cnt FROM user_tables WHERE table_name = 'DAVERSY$$TMP_GRANTS';
+    IF cnt <> 0 THEN
+
+        FOR rec IN (
+            SELECT 'GRANT '||privilege||' ON '||table_name||' TO '
+                   ||grantee||DECODE(grantable, 'YES', ' WITH GRANT OPTION') AS query
+            FROM daversy$$tmp_grants WHERE (table_name, grantee, privilege, grantable) NOT IN (
+                SELECT table_name, grantee, privilege, grantable
+                FROM sys.user_tab_privs WHERE owner = grantor AND owner = USER)) LOOP
+                    BEGIN
+                        EXECUTE IMMEDIATE rec.query;
+                    EXCEPTION WHEN others THEN
+                        NULL;
+                    END;
+        END LOOP;
+
+        EXECUTE IMMEDIATE 'DROP TABLE daversy$$tmp_grants';
+    END IF;
 END;
 /
 """
