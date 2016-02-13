@@ -74,6 +74,10 @@ class IndexBuilder(object):
             state.indexes[index.name] = index
 
     @staticmethod
+    def isAllowed(state, index):
+        return state.tables.get(index['table-name'])
+
+    @staticmethod
     def createSQL(index):
         sql = "CREATE %(unique)s %(bitmap)s INDEX %(name)s ON %(table-name)s (\n" \
               "  %(column_sql)s\n)%(suffix)s\n/\n"
@@ -88,6 +92,6 @@ class IndexBuilder(object):
         if index.compress:
             suffix = ' COMPRESS '+index.compress
 
-        return render(sql, index, unique=unique, bitmap=bitmap, 
+        return render(sql, index, unique=unique, bitmap=bitmap,
                        suffix=suffix, column_sql=column_sql)
 

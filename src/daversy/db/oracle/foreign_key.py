@@ -65,6 +65,11 @@ class ForeignKeyBuilder(object):
             state.foreign_keys[foreign_key.name] = foreign_key
 
     @staticmethod
+    def isAllowed(state, foreign_key):
+        exists = state.tables.get
+        return exists(foreign_key['table']) and exists(foreign_key['reference-table'])
+
+    @staticmethod
     def createSQL(fk):
         sql = "ALTER TABLE %(table)s ADD CONSTRAINT %(name)s\n" \
               "FOREIGN KEY ( %(key_columns)s )\n"   \
@@ -73,7 +78,7 @@ class ForeignKeyBuilder(object):
         on_delete = ''
         if fk['delete-rule'] != 'no action':
             on_delete = 'ON DELETE ' + fk['delete-rule']
-        
+
         defer_sql = ''
         if fk['defer-type']:
             defer_sql += " DEFERRABLE INITIALLY "+fk['defer-type']

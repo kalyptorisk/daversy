@@ -25,7 +25,7 @@ class FileState:
           message = 'Document does not comply with schema.\n\n%s' % schema.error_log
           raise etree.DocumentInvalid(message)
 
-        return self._load_element(document.getroot(),
+        return self._load_element(document.getroot(), None,
                                    db.__state__, filters)
 
     def save(self, state, location, info):
@@ -96,7 +96,7 @@ class FileState:
             self.xml_mapping[builder.XmlTag] = "{%s}%s" % (db.__xmlns__,
                                                             builder.XmlTag)
 
-    def _load_element(self, node, dbclass, filters):
+    def _load_element(self, node, root, dbclass, filters):
         if not self.db_mapping.has_key(dbclass):
             return None
 
@@ -106,6 +106,7 @@ class FileState:
 
         # load attributes
         object = builder.DbClass()
+        state  = root or object
         if hasattr(builder, 'PropertyList'):
             for prop in builder.PropertyList.values():
                 if prop.exclude:
@@ -127,11 +128,14 @@ class FileState:
         if not is_allowed( object, filters.get(builder.XmlTag) ):
             return None
 
+        if hasattr(builder, 'isAllowed') and not builder.isAllowed(state, object):
+            return None
+
         # load sub-elements
         if hasattr(object, 'SubElements'):
             for key, dbclass in object.SubElements.items():
                 for child in node:
-                    childObject = self._load_element(child, dbclass, filters)
+                    childObject = self._load_element(child, state, dbclass, filters)
                     if childObject:
                         object[key][childObject.name] = childObject
 
